@@ -2,7 +2,7 @@ FROM dunglas/frankenphp:1-php8.4 AS app
 
 WORKDIR /app
 
-RUN install-php-extensions pdo_pgsql intl opcache apcu zip
+RUN install-php-extensions pdo_pgsql intl opcache apcu zip gd exif
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 

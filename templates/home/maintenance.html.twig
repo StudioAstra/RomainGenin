@@ -1,0 +1,50 @@
+{% extends 'base.html.twig' %}
+{% import 'home/_macros.html.twig' as ui %}
+
+{% block title %}{{ profile.fullName }} · {{ profile.jobTitle }}{% endblock %}
+
+{% block meta %}
+    <meta name="robots" content="noindex">
+{% endblock %}
+
+{% block body %}
+<div class="mx-auto flex min-h-dvh max-w-[1200px] flex-col px-[clamp(20px,4vw,48px)]">
+
+    <nav class="flex items-center justify-between gap-6 border-b-2 border-ink py-[18px]">
+        <span class="text-[15px] font-extrabold tracking-[-.02em]">{{ profile.fullName }}</span>
+        <span class="text-[13px] font-semibold tracking-[.06em] text-accent uppercase">Maintenance</span>
+    </nav>
+
+    <main class="flex flex-1 flex-col justify-center gap-8 py-[clamp(40px,8vw,96px)]">
+        <div class="flex flex-col gap-5">
+            <h1 class="m-0 text-[clamp(56px,10vw,132px)] leading-[.86] font-extrabold tracking-[-.045em]">{{ profile.firstName }}<br>{{ profile.lastName }}</h1>
+            <div class="text-[clamp(17px,2vw,22px)] leading-[1.25] font-semibold text-accent">
+                {{ profile.jobTitle }}{% if profile.jobSubtitle %}<br>{{ profile.jobSubtitle }}{% endif %}
+            </div>
+            {{ ui.availability(profile) }}
+        </div>
+
+        <p class="m-0 max-w-[640px] text-[clamp(18px,2.2vw,26px)] leading-[1.35] font-medium tracking-[-.01em] text-pretty">
+            {{ profile.maintenanceMessage ?: 'Le site fait peau neuve, il revient très vite. En attendant, vous pouvez télécharger mon CV ou me contacter directement.' }}
+        </p>
+
+        <div class="flex flex-wrap gap-3">
+            {% if profile.cvFile %}
+                <a href="{{ asset('uploads/cv/' ~ profile.cvFile) }}" download="{{ 'CV ' ~ profile.fullName ~ '.pdf' }}" class="border-2 border-ink bg-ink px-5 py-3 text-[14px] font-semibold tracking-[.06em] text-paper uppercase hover:border-accent hover:bg-accent hover:text-white">Télécharger mon CV ↓</a>
+            {% endif %}
+            {% if profile.email %}
+                <a href="{{ ui.mailto(profile) }}" class="border-2 border-ink px-5 py-3 text-[14px] font-semibold tracking-[.06em] uppercase hover:border-accent hover:text-accent">Me contacter →</a>
+            {% endif %}
+        </div>
+
+        {% if profile.linkedinUrl or profile.visibleMaltUrl %}
+            <div class="flex flex-wrap gap-6 border-t border-line pt-5 text-[14px] font-medium">
+                {% if profile.linkedinUrl %}<a href="{{ profile.linkedinUrl }}" target="_blank" rel="noopener">LinkedIn ↗</a>{% endif %}
+                {% if profile.visibleMaltUrl %}<a href="{{ profile.visibleMaltUrl }}" target="_blank" rel="noopener">Malt ↗</a>{% endif %}
+            </div>
+        {% endif %}
+    </main>
+
+    <div class="pb-8 text-[12px] text-faint">© {{ 'now'|date('Y') }} {{ profile.fullName }}</div>
+</div>
+{% endblock %}

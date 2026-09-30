@@ -23,3 +23,8 @@
 /public/uploads/cv/*
 !/public/uploads/cv/.gitkeep
 ###< app ###
+
+###> phpunit/phpunit ###
+/phpunit.xml
+/.phpunit.cache/
+###< phpunit/phpunit ###

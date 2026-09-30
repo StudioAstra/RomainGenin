@@ -19,6 +19,7 @@ if [ "$1" = 'frankenphp' ] || [ "$1" = 'php' ] || [ "$1" = 'bin/console' ]; then
 	php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
 	php bin/console app:seed --no-interaction
 	php bin/console app:admin --no-interaction
+	php bin/console app:images:optimize --no-interaction || echo "Optimisation des images ignorée." >&2
 	php bin/console cache:warmup
 fi
 

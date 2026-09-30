@@ -1,4 +1,5 @@
 {% extends 'base.html.twig' %}
+{% import 'home/_macros.html.twig' as ui %}
 
 {% set uploads = 'uploads/images/' %}
 {% set cv_url = profile.cvFile ? asset('uploads/cv/' ~ profile.cvFile) : null %}
@@ -19,6 +20,12 @@
 {% endblock %}
 
 {% block body %}
+{% if profile.maintenance %}
+    <div class="bg-ink px-4 py-2 text-center text-[13px] font-medium text-paper">
+        Mode maintenance actif : les visiteurs voient la page d'attente.
+        <a href="{{ path('admin') }}" class="text-paper underline hover:text-paper">Désactiver dans l'admin</a>
+    </div>
+{% endif %}
 {# Numérotation des sections dans l'ordre de lecture (01, 02…) : une section vide est masquée sans trou dans la suite. #}
 {% set n = 0 %}
 <div class="mx-auto max-w-[1200px] px-[clamp(20px,4vw,48px)]">
@@ -43,6 +50,7 @@
             <div class="text-[clamp(17px,2vw,22px)] leading-[1.25] font-semibold text-accent">
                 {{ profile.jobTitle }}{% if profile.jobSubtitle %}<br>{{ profile.jobSubtitle }}{% endif %}
             </div>
+            {{ ui.availability(profile) }}
         </div>
         <div class="flex w-full max-w-[420px] flex-col gap-3.5 justify-self-end">
             {% if profile.photo %}
@@ -87,7 +95,10 @@
     {% if pro_projects is not empty %}
     {% set n = n + 1 %}
     <section id="projets-pro" class="flex flex-col gap-7 border-b-2 border-ink py-[clamp(36px,5vw,64px)]">
-        <div class="section-label"><span class="text-accent">{{ '%02d'|format(n) }}</span><span>Projets pro</span></div>
+        <div class="flex flex-col gap-2">
+            <div class="section-label"><span class="text-accent">{{ '%02d'|format(n) }}</span><span>Projets pro</span></div>
+            <p class="m-0 text-[14px] leading-[1.5] text-muted">Liste non exhaustive : certains projets, soumis à confidentialité, ne sont pas présentés.</p>
+        </div>
         <div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,300px),1fr))] gap-4">
             {% for project in pro_projects %}
                 {% set tag = project.url ? 'a' : 'article' %}
@@ -113,16 +124,16 @@
     </section>
     {% endif %}
 
-    <section id="competences" class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] border-b-2 border-ink">
+    <section id="competences" class="grid grid-cols-1 border-b-2 border-ink lg:grid-cols-3">
         {% set n = n + 1 %}
-        <div class="flex flex-col gap-[18px] border-r border-line py-[clamp(32px,4vw,48px)] pr-8">
+        <div class="flex flex-col gap-[18px] border-b border-line py-[clamp(32px,4vw,48px)] lg:border-r lg:border-b-0 lg:pr-8">
             <div class="section-label"><span class="text-accent">{{ '%02d'|format(n) }}</span><span>Compétences</span></div>
             <div class="flex flex-wrap gap-2">
                 {% for skill in profile.skills %}<span class="tag">{{ skill }}</span>{% endfor %}
             </div>
         </div>
         {% set n = n + 1 %}
-        <div class="flex flex-col gap-[18px] border-r border-line p-8 py-[clamp(32px,4vw,48px)]">
+        <div class="flex flex-col gap-[18px] border-b border-line py-[clamp(32px,4vw,48px)] lg:border-r lg:border-b-0 lg:px-8">
             <div class="section-label"><span class="text-accent">{{ '%02d'|format(n) }}</span><span>Certifications</span></div>
             {% for certification in certifications %}
                 <div class="{{ certification.featured ? 'bg-accent text-white' : 'border border-accent' }} p-[18px] text-[15px] leading-[1.4]">
@@ -131,7 +142,7 @@
             {% endfor %}
         </div>
         {% set n = n + 1 %}
-        <div class="flex flex-col gap-[18px] py-[clamp(32px,4vw,48px)] pl-8">
+        <div class="flex flex-col gap-[18px] py-[clamp(32px,4vw,48px)] lg:pl-8">
             <div class="section-label"><span class="text-accent">{{ '%02d'|format(n) }}</span><span>Formation</span></div>
             {% for education in educations %}
                 <div class="flex flex-col gap-1">
@@ -184,13 +195,14 @@
     </section>
     {% endif %}
 
-    <footer id="contact" class="my-[clamp(40px,6vw,72px)] flex flex-col gap-8 bg-accent p-[clamp(32px,5vw,64px)] text-white">
+    <footer id="contact" class="my-[clamp(40px,6vw,72px)] flex flex-col gap-8 bg-accent p-[clamp(24px,5vw,64px)] text-white">
         <div class="flex flex-wrap items-end justify-between gap-6">
             <h2 class="m-0 text-[clamp(40px,7vw,96px)] leading-[.9] font-extrabold tracking-[-.04em]">Travaillons<br>ensemble.</h2>
             {% if cv_url %}<a href="{{ cv_url }}" download="{{ cv_name }}" class="bg-white px-5 py-3 text-[14px] font-semibold tracking-[.06em] text-accent uppercase hover:bg-paper hover:text-ink">Télécharger mon CV ↓</a>{% endif %}
         </div>
+        {{ ui.availability(profile, true) }}
         <div class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,200px),1fr))] gap-4 border-t border-white/60 pt-[18px] text-[15px] font-medium">
-            {% if profile.email %}<a href="mailto:{{ profile.email }}" class="text-white hover:text-white">{{ profile.email }}</a>{% endif %}
+            {% if profile.email %}<a href="{{ ui.mailto(profile) }}" class="text-white hover:text-white">{{ profile.email }}</a>{% endif %}
             {% if profile.phone %}<a href="tel:{{ profile.phone|replace({' ': '', '.': ''}) }}" class="text-white hover:text-white">{{ profile.phone }}</a>{% endif %}
             {% if profile.linkedinUrl %}<a href="{{ profile.linkedinUrl }}" target="_blank" rel="noopener" class="text-white hover:text-white">LinkedIn ↗</a>{% endif %}
             {% if profile.visibleMaltUrl %}<a href="{{ profile.visibleMaltUrl }}" target="_blank" rel="noopener" class="text-white hover:text-white">Malt ↗</a>{% endif %}

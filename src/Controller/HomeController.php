@@ -28,6 +28,15 @@ class HomeController extends AbstractController
             throw $this->createNotFoundException('Profil non configuré : lancez « bin/console app:seed » ou créez-le dans /admin.');
         }
 
+        if ($profile->isMaintenance() && !$this->isGranted('ROLE_ADMIN')) {
+            $response = $this->render('home/maintenance.html.twig', ['profile' => $profile]);
+            $response->setStatusCode(Response::HTTP_SERVICE_UNAVAILABLE);
+            $response->headers->set('Retry-After', '3600');
+            $response->headers->set('X-Robots-Tag', 'noindex');
+
+            return $response;
+        }
+
         return $this->render('home/index.html.twig', [
             'profile' => $profile,
             'experiences' => $experiences->findPublished(),

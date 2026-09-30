@@ -63,9 +63,31 @@ class ProfileCrudController extends AbstractCrudController
             ->setUploadDir(ProjectCrudController::UPLOAD_DIR)
             ->setUploadedFileNamePattern('photo-[randomhash].[extension]')
             ->mimeTypes('image/jpeg,image/png,image/webp,image/avif')
-            ->maxSize('8M')
-            ->setHelp('Format portrait 4:5 conseillé.')
+            ->maxSize('20M')
+            ->deleteReplacedFile()
+            ->setHelp('Format portrait 4:5 conseillé. Convertie automatiquement en WebP et redimensionnée.')
             ->setColumns(6);
+
+        yield FormField::addFieldset('Mode maintenance');
+        yield BooleanField::new('maintenance', 'Site en maintenance')
+            ->setHelp('Les visiteurs voient une page d\'attente avec le CV et un bouton de contact. Connecté à l\'admin, vous voyez toujours le site.')
+            ->renderAsSwitch()
+            ->setColumns(6);
+        yield TextareaField::new('maintenanceMessage', 'Message (optionnel)')
+            ->setHelp('Vide : « Le site fait peau neuve, il revient très vite. »')
+            ->setNumOfRows(2)
+            ->setColumns(6)
+            ->hideOnIndex();
+
+        yield FormField::addFieldset('Disponibilité');
+        yield BooleanField::new('available', 'Disponible')
+            ->setHelp('Badge vert « disponible » ou gris « indisponible » sur le site.')
+            ->renderAsSwitch()
+            ->setColumns(6);
+        yield TextField::new('availabilityLabel', 'Texte du badge (optionnel)')
+            ->setHelp('Ex. « Disponible à partir de janvier 2027 ». Vide : « Disponible pour de nouvelles missions » ou « Actuellement indisponible ».')
+            ->setColumns(6)
+            ->hideOnIndex();
 
         yield FormField::addFieldset('Introduction');
         yield TextareaField::new('intro', 'Texte d\'introduction')->setNumOfRows(5)->hideOnIndex();

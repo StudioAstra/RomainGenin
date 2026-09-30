@@ -52,6 +52,10 @@ class DashboardController extends AbstractDashboardController
             $profileItem->setAction(Action::NEW);
         }
 
+        if ($profile?->isMaintenance()) {
+            $profileItem->setBadge('Maintenance', 'warning');
+        }
+
         yield $profileItem;
 
         yield MenuItem::section('Contenu');
