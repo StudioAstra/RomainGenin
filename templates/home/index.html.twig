@@ -1,0 +1,194 @@
+{% extends 'base.html.twig' %}
+
+{% set uploads = 'uploads/images/' %}
+{% set photo_url = profile.photo ? absolute_url(asset(uploads ~ profile.photo)) : null %}
+{% set description = profile.intro|default('')|u.truncate(160, '…', false) %}
+
+{% block title %}{{ profile.fullName }} · {{ profile.jobTitle }}{% endblock %}
+
+{% block meta %}
+    <meta name="description" content="{{ description }}">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{ profile.fullName }} · {{ profile.jobTitle }}">
+    <meta property="og:description" content="{{ description }}">
+    <meta property="og:url" content="{{ url('home') }}">
+    {% if photo_url %}<meta property="og:image" content="{{ photo_url }}">{% endif %}
+    <link rel="canonical" href="{{ url('home') }}">
+{% endblock %}
+
+{% block body %}
+{# Numérotation des sections dans l'ordre de lecture (01, 02…) : une section vide est masquée sans trou dans la suite. #}
+{% set n = 0 %}
+<div class="mx-auto max-w-[1200px] px-[clamp(20px,4vw,48px)]">
+
+    <nav class="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-6 border-b-2 border-ink bg-paper py-[18px]">
+        <a href="#top" class="text-[15px] font-extrabold tracking-[-.02em]">{{ profile.fullName }}</a>
+        <div class="flex flex-wrap gap-[clamp(14px,2.5vw,28px)] text-[13px] font-semibold tracking-[.06em] uppercase">
+            {% if experiences is not empty %}<a href="#experiences">Expériences</a>{% endif %}
+            <a href="#competences">Compétences</a>
+            {% if pro_projects is not empty %}<a href="#projets-pro">Projets</a>{% elseif perso_projects is not empty %}<a href="#projets">Projets</a>{% endif %}
+            {% if profile.maltUrl %}<a href="{{ profile.maltUrl }}" target="_blank" rel="noopener">Malt ↗</a>{% endif %}
+            <a href="#contact" class="text-accent">Contact</a>
+        </div>
+    </nav>
+
+    <header id="top" class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,360px),1fr))] items-end gap-[clamp(24px,4vw,48px)] border-b-2 border-ink pt-[clamp(40px,7vw,88px)] pb-[clamp(32px,5vw,56px)]">
+        <div class="flex flex-col gap-7">
+            <h1 class="m-0 text-[clamp(64px,11vw,148px)] leading-[.86] font-extrabold tracking-[-.045em]">{{ profile.firstName }}<br>{{ profile.lastName }}</h1>
+            <div class="text-[clamp(17px,2vw,22px)] leading-[1.25] font-semibold text-accent">
+                {{ profile.jobTitle }}{% if profile.jobSubtitle %}<br>{{ profile.jobSubtitle }}{% endif %}
+            </div>
+        </div>
+        <div class="flex w-full max-w-[420px] flex-col gap-3.5 justify-self-end">
+            {% if profile.photo %}
+                <img src="{{ asset(uploads ~ profile.photo) }}" alt="{{ profile.fullName }}" class="aspect-[4/5] w-full object-cover" width="420" height="525" fetchpriority="high">
+            {% else %}
+                <div class="image-placeholder aspect-[4/5] w-full">photo</div>
+            {% endif %}
+            {% if profile.location %}<div class="text-[13px] font-medium">{{ profile.location }}</div>{% endif %}
+        </div>
+    </header>
+
+    {% if profile.intro %}
+    <section class="flex flex-wrap gap-x-12 gap-y-6 border-b border-line py-[clamp(36px,5vw,64px)]">
+        <div class="flex-[1_1_180px] text-[12px] font-semibold tracking-[.08em] uppercase">Introduction</div>
+        <p class="m-0 max-w-[860px] flex-[3_1_520px] text-[clamp(20px,2.4vw,30px)] leading-[1.3] font-medium tracking-[-.015em] text-pretty">{{ profile.intro }}</p>
+    </section>
+    {% endif %}
+
+    {% if experiences is not empty %}
+    {% set n = n + 1 %}
+    <section id="experiences" class="flex flex-wrap gap-x-12 gap-y-6 border-b-2 border-ink py-[clamp(36px,5vw,64px)]">
+        <div class="section-label sticky top-20 flex-[1_1_180px] self-start"><span class="text-accent">{{ '%02d'|format(n) }}</span><span>Expériences</span></div>
+        <div class="flex flex-[3_1_520px] flex-col">
+            {% for experience in experiences %}
+            <article class="flex flex-wrap gap-x-8 gap-y-2 {{ loop.first ? 'pt-0' : 'pt-7' }} {{ loop.last ? 'pb-0' : 'border-b border-line pb-7' }}">
+                <div class="flex-[1_1_140px] pt-1 text-[13px] font-medium">
+                    {{ experience.startDate|date('m.Y') }} → {{ experience.endDate ? experience.endDate|date('m.Y') : 'auj.' }}
+                </div>
+                <div class="flex flex-[3_1_360px] flex-col gap-1.5">
+                    <h3 class="m-0 text-[22px] font-semibold tracking-[-.01em]">{{ experience.title }}</h3>
+                    <div class="text-[14px] font-medium text-accent">{{ experience.company }}</div>
+                    {% if experience.description %}
+                        <p class="mt-1 mb-0 max-w-[640px] text-[15px] leading-[1.6] text-pretty text-muted">{{ experience.description }}</p>
+                    {% endif %}
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if pro_projects is not empty %}
+    {% set n = n + 1 %}
+    <section id="projets-pro" class="flex flex-col gap-7 border-b-2 border-ink py-[clamp(36px,5vw,64px)]">
+        <div class="section-label"><span class="text-accent">{{ '%02d'|format(n) }}</span><span>Projets pro</span></div>
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,300px),1fr))] gap-4">
+            {% for project in pro_projects %}
+                {% set tag = project.url ? 'a' : 'article' %}
+                <{{ tag }} {% if project.url %}href="{{ project.url }}" target="_blank" rel="noopener" {% endif %}class="flex flex-col gap-3 border border-ink p-4{{ project.url ? ' hover:bg-hover' }}">
+                    {% if project.image %}
+                        <img src="{{ asset(uploads ~ project.image) }}" alt="{{ project.title }}" class="aspect-[16/10] w-full object-cover" loading="lazy">
+                    {% else %}
+                        <div class="image-placeholder aspect-[16/10] w-full">visuel {{ project.title }}</div>
+                    {% endif %}
+                    <div class="flex flex-col gap-1">
+                        <h3 class="m-0 text-[18px] font-semibold tracking-[-.01em]">{{ project.title }}{% if project.url %} ↗{% endif %}</h3>
+                        {% if project.client %}<div class="text-[13px] font-medium text-accent">{{ project.client }}</div>{% endif %}
+                        {% if project.description %}<p class="mt-1 mb-0 text-[14px] leading-[1.5] text-muted">{{ project.description }}</p>{% endif %}
+                    </div>
+                    {% if project.technologies is not empty %}
+                    <div class="mt-auto flex flex-wrap gap-1.5">
+                        {% for techno in project.technologies %}<span class="tag-sm">{{ techno }}</span>{% endfor %}
+                    </div>
+                    {% endif %}
+                </{{ tag }}>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <section id="competences" class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] border-b-2 border-ink">
+        {% set n = n + 1 %}
+        <div class="flex flex-col gap-[18px] border-r border-line py-[clamp(32px,4vw,48px)] pr-8">
+            <div class="section-label"><span class="text-accent">{{ '%02d'|format(n) }}</span><span>Compétences</span></div>
+            <div class="flex flex-wrap gap-2">
+                {% for skill in profile.skills %}<span class="tag">{{ skill }}</span>{% endfor %}
+            </div>
+        </div>
+        {% set n = n + 1 %}
+        <div class="flex flex-col gap-[18px] border-r border-line p-8 py-[clamp(32px,4vw,48px)]">
+            <div class="section-label"><span class="text-accent">{{ '%02d'|format(n) }}</span><span>Certifications</span></div>
+            {% for certification in certifications %}
+                <div class="{{ certification.featured ? 'bg-accent text-white' : 'border border-accent' }} p-[18px] text-[15px] leading-[1.4]">
+                    <b class="font-semibold">{{ certification.title }}</b>{% if certification.subtitle %}<br>{{ certification.subtitle }}{% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        {% set n = n + 1 %}
+        <div class="flex flex-col gap-[18px] py-[clamp(32px,4vw,48px)] pl-8">
+            <div class="section-label"><span class="text-accent">{{ '%02d'|format(n) }}</span><span>Formation</span></div>
+            {% for education in educations %}
+                <div class="flex flex-col gap-1">
+                    <div class="text-[13px] font-medium">{{ education.startYear }}{% if education.endYear %} → {{ education.endYear }}{% endif %}</div>
+                    <div class="text-[16px] leading-[1.3] font-semibold">{{ education.title }}</div>
+                    {% if education.school %}<div class="text-[14px] font-medium text-accent">{{ education.school }}</div>{% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    {% if perso_projects is not empty %}
+    {% set n = n + 1 %}
+    <section id="projets" class="flex flex-wrap gap-x-12 gap-y-6 border-b-2 border-ink py-[clamp(36px,5vw,64px)]">
+        <div class="section-label flex-[1_1_180px] self-start"><span class="text-accent">{{ '%02d'|format(n) }}</span><span>Projets perso</span></div>
+        <div class="flex flex-[3_1_520px] flex-col gap-4">
+            {% for project in perso_projects %}
+                {% set tag = project.url ? 'a' : 'article' %}
+                <{{ tag }} {% if project.url %}href="{{ project.url }}" target="_blank" rel="noopener" {% endif %}class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] gap-6 border border-ink p-[clamp(20px,3vw,32px)]{{ project.url ? ' hover:bg-hover' }}">
+                    {% if project.image %}
+                        <img src="{{ asset(uploads ~ project.image) }}" alt="Capture {{ project.title }}" class="h-[220px] w-full object-cover" loading="lazy">
+                    {% else %}
+                        <div class="image-placeholder h-[220px]">capture {{ project.title }}</div>
+                    {% endif %}
+                    <div class="flex flex-col justify-between gap-2.5">
+                        <div class="flex flex-col gap-2.5">
+                            <h3 class="m-0 text-[32px] font-extrabold tracking-[-.03em]">{{ project.title }}</h3>
+                            {% if project.description %}<p class="m-0 text-[16px] leading-[1.55] text-pretty text-muted">{{ project.description }}</p>{% endif %}
+                            {% if project.technologies is not empty %}
+                            <div class="flex flex-wrap gap-1.5">
+                                {% for techno in project.technologies %}<span class="tag-sm">{{ techno }}</span>{% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% if project.url %}<div class="text-[14px] font-semibold text-accent">{{ project.urlLabel }} ↗</div>{% endif %}
+                    </div>
+                </{{ tag }}>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if profile.hobbies is not empty %}
+    {% set n = n + 1 %}
+    <section class="flex flex-wrap gap-x-12 gap-y-6 border-b border-line py-[clamp(32px,4vw,48px)]">
+        <div class="section-label flex-[1_1_180px] self-start"><span class="text-accent">{{ '%02d'|format(n) }}</span><span>Loisirs</span></div>
+        <div class="flex flex-[3_1_520px] flex-wrap content-start gap-2">
+            {% for hobby in profile.hobbies %}<span class="tag">{{ hobby }}</span>{% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <footer id="contact" class="my-[clamp(40px,6vw,72px)] flex flex-col gap-8 bg-accent p-[clamp(32px,5vw,64px)] text-white">
+        <h2 class="m-0 text-[clamp(40px,7vw,96px)] leading-[.9] font-extrabold tracking-[-.04em]">Travaillons<br>ensemble.</h2>
+        <div class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,200px),1fr))] gap-4 border-t border-white/60 pt-[18px] text-[15px] font-medium">
+            {% if profile.email %}<a href="mailto:{{ profile.email }}" class="text-white hover:text-white">{{ profile.email }}</a>{% endif %}
+            {% if profile.phone %}<a href="tel:{{ profile.phone|replace({' ': '', '.': ''}) }}" class="text-white hover:text-white">{{ profile.phone }}</a>{% endif %}
+            {% if profile.linkedinUrl %}<a href="{{ profile.linkedinUrl }}" target="_blank" rel="noopener" class="text-white hover:text-white">LinkedIn ↗</a>{% endif %}
+            {% if profile.maltUrl %}<a href="{{ profile.maltUrl }}" target="_blank" rel="noopener" class="text-white hover:text-white">Malt ↗</a>{% endif %}
+            {% if profile.location %}<span>{{ profile.location }}</span>{% endif %}
+        </div>
+    </footer>
+    <div class="pb-8 text-[12px] text-faint">© {{ 'now'|date('Y') }} {{ profile.fullName }}</div>
+</div>
+{% endblock %}

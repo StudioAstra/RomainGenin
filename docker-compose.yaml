@@ -1,0 +1,41 @@
+# Déploiement Coolify : Build Pack « Docker Compose ».
+# Coolify génère automatiquement les SERVICE_PASSWORD_* et le domaine (SERVICE_FQDN_APP_80).
+# Seuls ADMIN_EMAIL et ADMIN_PASSWORD sont à renseigner dans l'onglet « Environment Variables ».
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      - SERVICE_FQDN_APP_80
+      - APP_ENV=prod
+      - APP_SECRET=${SERVICE_PASSWORD_64_APPSECRET}
+      - DATABASE_URL=postgresql://app:${SERVICE_PASSWORD_POSTGRES}@database:5432/app?serverVersion=16&charset=utf8
+      - ADMIN_EMAIL=${ADMIN_EMAIL:?ADMIN_EMAIL est requis}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:?ADMIN_PASSWORD est requis (12 caractères minimum)}
+      - TRUSTED_PROXIES=private_ranges
+      - SERVER_NAME=:80
+    volumes:
+      - uploads:/app/public/uploads
+    depends_on:
+      database:
+        condition: service_healthy
+
+  database:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=app
+      - POSTGRES_USER=app
+      - POSTGRES_PASSWORD=${SERVICE_PASSWORD_POSTGRES}
+    healthcheck:
+      test: ["CMD", "pg_isready", "-d", "app", "-U", "app"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    volumes:
+      - database_data:/var/lib/postgresql/data
+
+volumes:
+  uploads:
+  database_data:

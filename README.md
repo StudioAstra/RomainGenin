@@ -1,25 +1,69 @@
-# CODING AGENTS: READ THIS FIRST
+# romaingenin.fr
 
-This is a **handoff bundle** from Claude Design (claude.ai/design).
+Site perso one page (DA « 1b » : grille suisse, Archivo, vert forêt) en **Symfony 8 + Tailwind CSS 4**, avec un petit back-office **EasyAdmin** et un déploiement **Docker Compose / Coolify**.
 
-A user mocked up designs in HTML/CSS/JS using an AI design tool, then exported this bundle so a coding agent can implement the designs for real.
+La maquette d'origine (export Claude Design) est conservée dans [`design/`](design/) pour référence.
 
-## What you should do — IMPORTANT
+## Contenu éditable dans `/admin`
 
-**Read the chat transcripts first.** There are 1 chat transcript(s) in `chats/`. The transcripts show the full back-and-forth between the user and the design assistant — they tell you **what the user actually wants** and **where they landed** after iterating. Don't skip them. The final HTML files are the output, but the chat is where the intent lives.
+| Menu | Contenu |
+|---|---|
+| Profil, poste & photo | nom, poste occupé + sous-titre, photo, localisation, intro, compétences, loisirs, e-mail, téléphone, LinkedIn, Malt |
+| Projets | projets **pro** (grille de cartes) et **perso** (grande carte type StudioAstra) : visuel, client, rôle, technos, lien, ordre, publié/brouillon |
+| Expériences | poste, entreprise, dates (fin vide = « auj. »), description, ordre, publié |
+| Certifications | intitulé, précision, mise en avant (bloc plein vert) |
+| Formation | diplôme, établissement, années |
 
-**Read `project/Site Perso.dc.html` in full.** The user had this file open when they triggered the handoff, so it's almost certainly the primary design they want built. Read it top to bottom — don't skim. Then **follow its imports**: open every file it pulls in (shared components, CSS, scripts) so you understand how the pieces fit together before you start implementing.
+Les sections vides sont masquées et la numérotation (01, 02…) se recalcule toute seule.
+Les images envoyées sont stockées dans `public/uploads/images` (volume Docker `uploads`).
 
-**If anything is ambiguous, ask the user to confirm before you start implementing.** It's much cheaper to clarify scope up front than to build the wrong thing.
+## Déploiement sur Coolify
 
-## About the design files
+1. **New Resource → Public/Private repository** → Build Pack **Docker Compose** (fichier `docker-compose.yaml`).
+2. Dans **Environment Variables**, renseigner :
+   - `ADMIN_EMAIL` : identifiant de connexion à l'admin
+   - `ADMIN_PASSWORD` : 12 caractères minimum
 
-The design medium is **HTML/CSS/JS** — these are prototypes, not production code. Your job is to **recreate them pixel-perfectly** in whatever technology makes sense for the target codebase (React, Vue, native, whatever fits). Match the visual output; don't copy the prototype's internal structure unless it happens to fit.
+   `SERVICE_PASSWORD_POSTGRES` et `SERVICE_PASSWORD_64_APPSECRET` sont générés automatiquement par Coolify.
+3. Sur le service `app`, définir le domaine (ex. `https://romaingenin.fr`), port **80**.
+4. Deploy.
 
-**Don't render these files in a browser or take screenshots unless the user asks you to.** Everything you need — dimensions, colors, layout rules — is spelled out in the source. Read the HTML and CSS directly; a screenshot won't tell you anything they don't.
+Au démarrage, le conteneur :
+- attend Postgres ;
+- joue les migrations ;
+- insère le contenu de la maquette si la base est vide (`app:seed`) ;
+- crée ou met à jour le compte admin à partir de `ADMIN_EMAIL` / `ADMIN_PASSWORD` (`app:admin`).
 
-## Bundle contents
+Pour changer le mot de passe, modifie la variable puis redéploie.
 
-- `README.md` — this file
-- `chats/` — conversation transcripts (read these!)
-- `project/` — the `CV A4 avec trois propositions design` project files (HTML prototypes, assets, components)
+Pensez à activer les **backups** du volume `database_data` (et `uploads`) dans Coolify.
+
+## Développement local
+
+Prérequis : PHP 8.4 (pdo_pgsql, intl), Composer, PostgreSQL.
+
+```bash
+composer install
+cp .env .env.local   # puis ajuster DATABASE_URL, APP_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD
+php bin/console doctrine:migrations:migrate -n
+php bin/console app:seed
+php bin/console app:admin            # ou : app:admin moi@exemple.fr "mot-de-passe-long"
+php bin/console tailwind:build --watch   # dans un autre terminal
+symfony serve                            # ou : php -S 127.0.0.1:8000 -t public
+```
+
+Ou tout en Docker :
+
+```bash
+ADMIN_EMAIL=admin@example.com ADMIN_PASSWORD=changez-moi-svp \
+  docker compose -f docker-compose.yaml -f docker-compose.local.yaml up --build
+# → http://localhost:8080  et  http://localhost:8080/admin
+```
+
+## Où modifier quoi
+
+- Couleurs / police (tokens Tailwind) : `assets/styles/app.css` (`@theme`)
+- Page : `templates/home/index.html.twig`
+- Admin : `src/Controller/Admin/`
+- Contenu initial : `src/Command/SeedCommand.php` (photo : `resources/seed/photo.webp`)
+- Tailwind est figé en `v4.3.0` dans `config/packages/symfonycasts_tailwind.yaml`
