@@ -59,7 +59,7 @@ class Profile
     #[Assert\Url]
     private ?string $maltUrl = null;
 
-    /** Disponible pour de nouvelles missions (badge en haut de page et dans le contact). */
+    /** Disponible ou non (badge en haut de page et dans le contact). */
     #[ORM\Column(options: ['default' => true])]
     private bool $available = true;
 
@@ -264,7 +264,7 @@ class Profile
     public function getAvailabilityText(): string
     {
         return $this->availabilityLabel
-            ?: ($this->available ? 'Disponible pour de nouvelles missions' : 'Actuellement indisponible');
+            ?: ($this->available ? 'Disponible' : 'Non disponible');
     }
 
     public function isMaintenance(): bool

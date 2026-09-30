@@ -39,7 +39,8 @@ class HomeControllerTest extends WebTestCase
         self::assertSelectorTextContains('h1', 'Romain');
         self::assertSelectorTextContains('#projets-pro', 'Liste non exhaustive');
         self::assertSame(['Premier projet', 'Projet visible'], $crawler->filter('#projets-pro h3')->each(fn ($h) => trim($h->text())));
-        self::assertSelectorTextContains('header#top', 'Disponible pour de nouvelles missions');
+        self::assertSelectorTextContains('header#top', 'Disponible');
+        self::assertSelectorTextNotContains('header#top', 'missions');
         self::assertStringContainsString('subject=', $crawler->filter('#contact a[href^="mailto:"]')->attr('href'));
     }
 

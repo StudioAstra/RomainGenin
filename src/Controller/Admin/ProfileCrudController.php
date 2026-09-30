@@ -85,7 +85,7 @@ class ProfileCrudController extends AbstractCrudController
             ->renderAsSwitch()
             ->setColumns(6);
         yield TextField::new('availabilityLabel', 'Texte du badge (optionnel)')
-            ->setHelp('Ex. « Disponible à partir de janvier 2027 ». Vide : « Disponible pour de nouvelles missions » ou « Actuellement indisponible ».')
+            ->setHelp('Ex. « Disponible à partir de janvier 2027 ». Vide : « Disponible » ou « Non disponible ».')
             ->setColumns(6)
             ->hideOnIndex();
 
