@@ -30,19 +30,58 @@
 {% set n = 0 %}
 <div class="mx-auto max-w-[1200px] px-[clamp(20px,4vw,48px)]">
 
-    <nav class="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-6 border-b-2 border-ink bg-paper py-[18px]">
+    {# Liens de navigation, dans l'ordre des sections : partagés entre le menu desktop et le tiroir mobile #}
+    {% set nav_links = [] %}
+    {% if experiences is not empty %}{% set nav_links = nav_links|merge([{label: 'Expériences', href: '#experiences'}]) %}{% endif %}
+    {% if pro_projects is not empty %}{% set nav_links = nav_links|merge([{label: 'Projets', href: '#projets-pro'}]) %}{% endif %}
+    {% set nav_links = nav_links|merge([{label: 'Compétences', href: '#competences'}]) %}
+    {% if perso_projects is not empty %}{% set nav_links = nav_links|merge([{label: pro_projects is empty ? 'Projets' : 'Projets perso', href: '#projets', mobile_only: pro_projects is not empty}]) %}{% endif %}
+
+    <nav class="sticky top-0 z-10 flex items-center justify-between gap-6 border-b-2 border-ink bg-paper py-[18px]">
         <a href="#top" class="text-[15px] font-extrabold tracking-[-.02em]">{{ profile.fullName }}</a>
-        <div class="flex flex-wrap items-center gap-[clamp(14px,2.5vw,28px)] text-[13px] font-semibold tracking-[.06em] uppercase">
-            {# Même ordre que les sections de la page #}
-            {% if experiences is not empty %}<a href="#experiences">Expériences</a>{% endif %}
-            {% if pro_projects is not empty %}<a href="#projets-pro">Projets</a>{% endif %}
-            <a href="#competences">Compétences</a>
-            {% if pro_projects is empty and perso_projects is not empty %}<a href="#projets">Projets</a>{% endif %}
+        <div class="hidden flex-wrap items-center gap-[clamp(14px,2.5vw,28px)] text-[13px] font-semibold tracking-[.06em] uppercase md:flex">
+            {% for link in nav_links|filter(l => not (l.mobile_only ?? false)) %}<a href="{{ link.href }}">{{ link.label }}</a>{% endfor %}
             {% if profile.visibleMaltUrl %}<a href="{{ profile.visibleMaltUrl }}" target="_blank" rel="noopener">Malt ↗</a>{% endif %}
             <a href="#contact" class="text-accent">Contact</a>
             {% if cv_url %}<a href="{{ cv_url }}" download="{{ cv_name }}" class="-my-1.5 border-2 border-ink px-2.5 py-1 hover:bg-ink hover:text-paper">CV ↓</a>{% endif %}
         </div>
+        <button type="button" data-menu-open aria-controls="mobile-menu" aria-expanded="false" class="-my-1.5 flex cursor-pointer items-center gap-2.5 border-2 border-ink bg-transparent px-2.5 py-1 text-[13px] font-semibold tracking-[.06em] text-ink uppercase md:hidden">
+            <span class="flex w-4 flex-col gap-[3px]" aria-hidden="true"><span class="h-0.5 bg-current"></span><span class="h-0.5 bg-current"></span><span class="h-0.5 bg-current"></span></span>
+            Menu
+        </button>
     </nav>
+
+    <dialog id="mobile-menu" aria-label="Menu" class="m-0 ml-auto h-dvh max-h-none w-[min(100%,420px)] max-w-none translate-x-full border-0 border-l-2 border-ink bg-paper p-0 text-ink transition-[translate,display,overlay] transition-discrete duration-300 ease-out backdrop:bg-ink/40 open:translate-x-0 starting:open:translate-x-full motion-reduce:transition-none">
+        <div class="flex h-full flex-col px-5">
+            <div class="flex items-center justify-between gap-6 border-b-2 border-ink py-[18px]">
+                <span class="text-[15px] font-extrabold tracking-[-.02em]">{{ profile.fullName }}</span>
+                <button type="button" data-menu-close class="-my-1.5 cursor-pointer border-2 border-ink bg-transparent px-2.5 py-1 text-[13px] font-semibold tracking-[.06em] text-ink uppercase">Fermer ✕</button>
+            </div>
+            <ul class="m-0 flex list-none flex-col p-0">
+                {% for link in nav_links %}
+                    <li class="border-b border-line">
+                        <a href="{{ link.href }}" class="flex items-baseline gap-3 py-4 text-[30px] leading-none font-extrabold tracking-[-.03em]">
+                            <span class="text-[12px] font-semibold tracking-[.08em] text-accent">{{ '%02d'|format(loop.index) }}</span>{{ link.label }}
+                        </a>
+                    </li>
+                {% endfor %}
+                <li class="border-b border-line">
+                    <a href="#contact" class="flex items-baseline gap-3 py-4 text-[30px] leading-none font-extrabold tracking-[-.03em] text-accent">
+                        <span class="text-[12px] font-semibold tracking-[.08em]">{{ '%02d'|format(nav_links|length + 1) }}</span>Contact
+                    </a>
+                </li>
+            </ul>
+            <div class="mt-auto flex flex-col gap-4 py-6">
+                {{ ui.availability(profile) }}
+                {% if cv_url %}<a href="{{ cv_url }}" download="{{ cv_name }}" class="border-2 border-ink bg-ink px-5 py-3 text-center text-[14px] font-semibold tracking-[.06em] text-paper uppercase hover:text-paper">Télécharger mon CV ↓</a>{% endif %}
+                <div class="flex flex-wrap gap-6 text-[14px] font-medium">
+                    {% if profile.linkedinUrl %}<a href="{{ profile.linkedinUrl }}" target="_blank" rel="noopener">LinkedIn ↗</a>{% endif %}
+                    {% if profile.visibleMaltUrl %}<a href="{{ profile.visibleMaltUrl }}" target="_blank" rel="noopener">Malt ↗</a>{% endif %}
+                    {% if profile.email %}<a href="{{ ui.mailto(profile) }}">E-mail</a>{% endif %}
+                </div>
+            </div>
+        </div>
+    </dialog>
 
     <header id="top" class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,360px),1fr))] items-end gap-[clamp(24px,4vw,48px)] border-b-2 border-ink pt-[clamp(40px,7vw,88px)] pb-[clamp(32px,5vw,56px)]">
         <div class="flex flex-col gap-7">

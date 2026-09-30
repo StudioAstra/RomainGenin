@@ -16,6 +16,13 @@
 @layer base {
     html {
         scroll-behavior: smooth;
+        /* Les ancres ne passent pas sous le menu collant */
+        scroll-padding-top: 72px;
+    }
+
+    /* Pas de défilement de la page derrière le menu mobile ouvert */
+    html:has(dialog[open]) {
+        overflow: hidden;
     }
 
     body {
