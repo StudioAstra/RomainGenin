@@ -1,0 +1,22 @@
+{
+	frankenphp
+	# TLS géré par le reverse proxy de Coolify (Traefik/Caddy)
+	auto_https off
+}
+
+{$SERVER_NAME::80} {
+	root /app/public
+	encode zstd br gzip
+
+	# Jamais d'exécution PHP dans les fichiers envoyés depuis l'admin
+	@uploadsPhp path_regexp ^/uploads/.*\.ph(p|ar|tml)
+	respond @uploadsPhp 403
+
+	@uploads path /uploads/*
+	header @uploads Cache-Control "public, max-age=604800"
+
+	@assets path /assets/*
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+
+	php_server
+}

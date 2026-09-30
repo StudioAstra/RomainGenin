@@ -1,0 +1,48 @@
+@import "tailwindcss" source(none);
+@source "../../templates";
+
+/* DA « 1b » : grille suisse, Archivo, vert forêt clair sur anthracite */
+@theme {
+    --font-sans: "Archivo", ui-sans-serif, system-ui, sans-serif;
+    --color-ink: #2b2e2c;
+    --color-paper: #fbfbfc;
+    --color-accent: oklch(0.5 0.11 155);
+    --color-muted: #50544f;
+    --color-line: #c9ccd3;
+    --color-faint: #5a5f6b;
+    --color-hover: #f2f2f4;
+}
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        @apply m-0 bg-paper font-sans text-ink antialiased;
+    }
+
+    a {
+        @apply text-ink no-underline hover:text-accent;
+    }
+}
+
+@layer components {
+    /* Emplacement d'image vide (visuel pas encore envoyé depuis l'admin) */
+    .image-placeholder {
+        @apply flex items-center justify-center font-mono text-[12px] text-[#6b7080];
+        background: repeating-linear-gradient(135deg, #eef0f3 0 8px, #f6f7f9 8px 16px);
+    }
+
+    .section-label {
+        @apply flex gap-2.5 text-[12px] font-semibold tracking-[.08em] uppercase;
+    }
+
+    .tag {
+        @apply border border-ink px-3 py-1.5 text-[14px];
+    }
+
+    .tag-sm {
+        @apply border border-ink px-2 py-[3px] text-[12px];
+    }
+}

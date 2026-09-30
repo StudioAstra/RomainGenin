@@ -1,0 +1,14 @@
+.git
+.env.local
+.env.*.local
+/vendor
+/var
+/public/assets
+/public/bundles
+/public/uploads/images/*
+!/public/uploads/images/.gitkeep
+/assets/vendor
+/design
+docker-compose*.yaml
+Dockerfile
+.dockerignore

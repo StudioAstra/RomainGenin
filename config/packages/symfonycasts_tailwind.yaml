@@ -1,0 +1,3 @@
+symfonycasts_tailwind:
+    # Version figée : évite l'appel à l'API GitHub (rate-limit) et rend le build reproductible
+    binary_version: 'v4.3.0'

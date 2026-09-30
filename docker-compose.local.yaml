@@ -1,0 +1,17 @@
+# Test en local hors Coolify :
+#   ADMIN_EMAIL=admin@example.com ADMIN_PASSWORD=changez-moi-svp \
+#     docker compose -f docker-compose.yaml -f docker-compose.local.yaml up --build
+# puis http://localhost:8080 (admin : http://localhost:8080/admin)
+services:
+  app:
+    ports:
+      - "8080:80"
+    environment:
+      - APP_SECRET=local-secret-a-changer
+      - DATABASE_URL=postgresql://app:local@database:5432/app?serverVersion=16&charset=utf8
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+
+  database:
+    environment:
+      - POSTGRES_PASSWORD=local
