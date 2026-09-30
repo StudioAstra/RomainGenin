@@ -59,6 +59,14 @@ class Profile
     #[Assert\Url]
     private ?string $maltUrl = null;
 
+    /** Affiche le lien Malt (menu + contact). */
+    #[ORM\Column(options: ['default' => true])]
+    private bool $showMalt = true;
+
+    /** CV en PDF, téléchargeable depuis le menu et le contact. */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $cvFile = null;
+
     /** @var list<string> */
     #[ORM\Column(type: Types::JSON)]
     private array $skills = [];
@@ -210,6 +218,36 @@ class Profile
     public function setMaltUrl(?string $maltUrl): static
     {
         $this->maltUrl = $maltUrl;
+
+        return $this;
+    }
+
+    public function isShowMalt(): bool
+    {
+        return $this->showMalt;
+    }
+
+    public function setShowMalt(?bool $showMalt): static
+    {
+        $this->showMalt = (bool) $showMalt;
+
+        return $this;
+    }
+
+    /** Lien Malt à afficher, ou null si désactivé ou vide. */
+    public function getVisibleMaltUrl(): ?string
+    {
+        return $this->showMalt ? $this->maltUrl : null;
+    }
+
+    public function getCvFile(): ?string
+    {
+        return $this->cvFile;
+    }
+
+    public function setCvFile(?string $cvFile): static
+    {
+        $this->cvFile = $cvFile;
 
         return $this;
     }

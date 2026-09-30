@@ -24,7 +24,7 @@ RUN composer dump-autoload --classmap-authoritative --no-dev \
     && composer run-script --no-dev post-install-cmd \
     && php bin/console tailwind:build --minify \
     && php bin/console asset-map:compile \
-    && mkdir -p public/uploads/images var \
+    && mkdir -p public/uploads/images public/uploads/cv var \
     && rm -rf var/cache/*
 
 EXPOSE 80

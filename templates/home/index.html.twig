@@ -1,6 +1,8 @@
 {% extends 'base.html.twig' %}
 
 {% set uploads = 'uploads/images/' %}
+{% set cv_url = profile.cvFile ? asset('uploads/cv/' ~ profile.cvFile) : null %}
+{% set cv_name = 'CV ' ~ profile.fullName ~ '.pdf' %}
 {% set photo_url = profile.photo ? absolute_url(asset(uploads ~ profile.photo)) : null %}
 {% set description = profile.intro|default('')|u.truncate(160, '…', false) %}
 
@@ -23,14 +25,15 @@
 
     <nav class="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-6 border-b-2 border-ink bg-paper py-[18px]">
         <a href="#top" class="text-[15px] font-extrabold tracking-[-.02em]">{{ profile.fullName }}</a>
-        <div class="flex flex-wrap gap-[clamp(14px,2.5vw,28px)] text-[13px] font-semibold tracking-[.06em] uppercase">
+        <div class="flex flex-wrap items-center gap-[clamp(14px,2.5vw,28px)] text-[13px] font-semibold tracking-[.06em] uppercase">
             {# Même ordre que les sections de la page #}
             {% if experiences is not empty %}<a href="#experiences">Expériences</a>{% endif %}
             {% if pro_projects is not empty %}<a href="#projets-pro">Projets</a>{% endif %}
             <a href="#competences">Compétences</a>
             {% if pro_projects is empty and perso_projects is not empty %}<a href="#projets">Projets</a>{% endif %}
-            {% if profile.maltUrl %}<a href="{{ profile.maltUrl }}" target="_blank" rel="noopener">Malt ↗</a>{% endif %}
+            {% if profile.visibleMaltUrl %}<a href="{{ profile.visibleMaltUrl }}" target="_blank" rel="noopener">Malt ↗</a>{% endif %}
             <a href="#contact" class="text-accent">Contact</a>
+            {% if cv_url %}<a href="{{ cv_url }}" download="{{ cv_name }}" class="-my-1.5 border-2 border-ink px-2.5 py-1 hover:bg-ink hover:text-paper">CV ↓</a>{% endif %}
         </div>
     </nav>
 
@@ -182,12 +185,15 @@
     {% endif %}
 
     <footer id="contact" class="my-[clamp(40px,6vw,72px)] flex flex-col gap-8 bg-accent p-[clamp(32px,5vw,64px)] text-white">
-        <h2 class="m-0 text-[clamp(40px,7vw,96px)] leading-[.9] font-extrabold tracking-[-.04em]">Travaillons<br>ensemble.</h2>
+        <div class="flex flex-wrap items-end justify-between gap-6">
+            <h2 class="m-0 text-[clamp(40px,7vw,96px)] leading-[.9] font-extrabold tracking-[-.04em]">Travaillons<br>ensemble.</h2>
+            {% if cv_url %}<a href="{{ cv_url }}" download="{{ cv_name }}" class="bg-white px-5 py-3 text-[14px] font-semibold tracking-[.06em] text-accent uppercase hover:bg-paper hover:text-ink">Télécharger mon CV ↓</a>{% endif %}
+        </div>
         <div class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,200px),1fr))] gap-4 border-t border-white/60 pt-[18px] text-[15px] font-medium">
             {% if profile.email %}<a href="mailto:{{ profile.email }}" class="text-white hover:text-white">{{ profile.email }}</a>{% endif %}
             {% if profile.phone %}<a href="tel:{{ profile.phone|replace({' ': '', '.': ''}) }}" class="text-white hover:text-white">{{ profile.phone }}</a>{% endif %}
             {% if profile.linkedinUrl %}<a href="{{ profile.linkedinUrl }}" target="_blank" rel="noopener" class="text-white hover:text-white">LinkedIn ↗</a>{% endif %}
-            {% if profile.maltUrl %}<a href="{{ profile.maltUrl }}" target="_blank" rel="noopener" class="text-white hover:text-white">Malt ↗</a>{% endif %}
+            {% if profile.visibleMaltUrl %}<a href="{{ profile.visibleMaltUrl }}" target="_blank" rel="noopener" class="text-white hover:text-white">Malt ↗</a>{% endif %}
             {% if profile.location %}<span>{{ profile.location }}</span>{% endif %}
         </div>
     </footer>

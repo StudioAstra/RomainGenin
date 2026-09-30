@@ -8,14 +8,14 @@ La maquette d'origine (export Claude Design) est conservée dans [`design/`](des
 
 | Menu | Contenu |
 |---|---|
-| Profil, poste & photo | nom, poste occupé + sous-titre, photo, localisation, intro, compétences, loisirs, e-mail, téléphone, LinkedIn, Malt |
+| Profil, poste & photo | nom, poste occupé + sous-titre, photo, localisation, intro, compétences, loisirs, e-mail, téléphone, LinkedIn, Malt (+ interrupteur pour l'afficher ou non), **CV en PDF** (bouton « CV » dans le menu et « Télécharger mon CV » dans le contact, masqués sans fichier) |
 | Projets | projets **pro** (grille de cartes) et **perso** (grande carte type StudioAstra) : visuel, client, rôle, technos, lien, ordre, publié/brouillon |
 | Expériences | poste, entreprise, dates (fin vide = « auj. »), description, ordre, publié |
 | Certifications | intitulé, précision, mise en avant (bloc plein vert) |
 | Formation | diplôme, établissement, années |
 
 Les sections vides sont masquées et la numérotation (01, 02…) se recalcule toute seule.
-Les images envoyées sont stockées dans `public/uploads/images` (volume Docker `uploads`).
+Les fichiers envoyés sont stockés dans `public/uploads/images` et `public/uploads/cv` (volume Docker `uploads`).
 
 ## Déploiement sur Coolify
 

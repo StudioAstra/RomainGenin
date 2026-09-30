@@ -2,7 +2,7 @@
 set -e
 
 if [ "$1" = 'frankenphp' ] || [ "$1" = 'php' ] || [ "$1" = 'bin/console' ]; then
-	mkdir -p public/uploads/images var
+	mkdir -p public/uploads/images public/uploads/cv var
 
 	echo "Attente de la base de données…"
 	tries=60

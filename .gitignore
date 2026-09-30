@@ -19,4 +19,7 @@
 !/public/uploads/images/
 /public/uploads/images/*
 !/public/uploads/images/.gitkeep
+!/public/uploads/cv/
+/public/uploads/cv/*
+!/public/uploads/cv/.gitkeep
 ###< app ###

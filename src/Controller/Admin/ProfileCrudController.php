@@ -8,7 +8,9 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ArrayField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\EmailField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\FileField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ImageField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TelephoneField;
@@ -19,6 +21,9 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\UrlField;
 /** @extends AbstractCrudController<Profile> */
 class ProfileCrudController extends AbstractCrudController
 {
+    public const CV_UPLOAD_DIR = 'public/uploads/cv';
+    public const CV_BASE_PATH = 'uploads/cv';
+
     public static function getEntityFqcn(): string
     {
         return Profile::class;
@@ -74,5 +79,21 @@ class ProfileCrudController extends AbstractCrudController
         yield TelephoneField::new('phone', 'Téléphone')->setColumns(6)->hideOnIndex();
         yield UrlField::new('linkedinUrl', 'LinkedIn')->setColumns(6)->hideOnIndex();
         yield UrlField::new('maltUrl', 'Malt')->setColumns(6)->hideOnIndex();
+        yield BooleanField::new('showMalt', 'Afficher le lien Malt')
+            ->setHelp('Dans le menu et le bloc contact.')
+            ->renderAsSwitch()
+            ->setColumns(6)
+            ->hideOnIndex();
+
+        yield FormField::addFieldset('CV');
+        yield FileField::new('cvFile', 'CV (PDF)')
+            ->setBasePath(self::CV_BASE_PATH)
+            ->setUploadDir(self::CV_UPLOAD_DIR)
+            ->setUploadedFileNamePattern('cv-[randomhash].[extension]')
+            ->mimeTypes('application/pdf', 'Le CV doit être un fichier PDF.')
+            ->maxSize('10M')
+            ->deleteReplacedFile()
+            ->setHelp('Bouton « CV » dans le menu et le bloc contact. Sans fichier, les boutons sont masqués.')
+            ->hideOnIndex();
     }
 }
