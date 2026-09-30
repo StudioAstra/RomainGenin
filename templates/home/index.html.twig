@@ -24,9 +24,11 @@
     <nav class="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-6 border-b-2 border-ink bg-paper py-[18px]">
         <a href="#top" class="text-[15px] font-extrabold tracking-[-.02em]">{{ profile.fullName }}</a>
         <div class="flex flex-wrap gap-[clamp(14px,2.5vw,28px)] text-[13px] font-semibold tracking-[.06em] uppercase">
+            {# Même ordre que les sections de la page #}
             {% if experiences is not empty %}<a href="#experiences">Expériences</a>{% endif %}
+            {% if pro_projects is not empty %}<a href="#projets-pro">Projets</a>{% endif %}
             <a href="#competences">Compétences</a>
-            {% if pro_projects is not empty %}<a href="#projets-pro">Projets</a>{% elseif perso_projects is not empty %}<a href="#projets">Projets</a>{% endif %}
+            {% if pro_projects is empty and perso_projects is not empty %}<a href="#projets">Projets</a>{% endif %}
             {% if profile.maltUrl %}<a href="{{ profile.maltUrl }}" target="_blank" rel="noopener">Malt ↗</a>{% endif %}
             <a href="#contact" class="text-accent">Contact</a>
         </div>
