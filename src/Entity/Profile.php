@@ -59,6 +59,29 @@ class Profile
     #[Assert\Url]
     private ?string $maltUrl = null;
 
+    /** Disponible ou non (badge en haut de page et dans le contact). */
+    #[ORM\Column(options: ['default' => true])]
+    private bool $available = true;
+
+    /** Texte du badge ; vide = libellé par défaut selon la disponibilité. */
+    #[ORM\Column(length: 120, nullable: true)]
+    private ?string $availabilityLabel = null;
+
+    /** Mode maintenance : les visiteurs voient une page d'attente (CV + contact), l'admin voit le site. */
+    #[ORM\Column(options: ['default' => false])]
+    private bool $maintenance = false;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $maintenanceMessage = null;
+
+    /** Affiche le lien Malt (menu + contact). */
+    #[ORM\Column(options: ['default' => true])]
+    private bool $showMalt = true;
+
+    /** CV en PDF, téléchargeable depuis le menu et le contact. */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $cvFile = null;
+
     /** @var list<string> */
     #[ORM\Column(type: Types::JSON)]
     private array $skills = [];
@@ -210,6 +233,90 @@ class Profile
     public function setMaltUrl(?string $maltUrl): static
     {
         $this->maltUrl = $maltUrl;
+
+        return $this;
+    }
+
+    public function isAvailable(): bool
+    {
+        return $this->available;
+    }
+
+    public function setAvailable(?bool $available): static
+    {
+        $this->available = (bool) $available;
+
+        return $this;
+    }
+
+    public function getAvailabilityLabel(): ?string
+    {
+        return $this->availabilityLabel;
+    }
+
+    public function setAvailabilityLabel(?string $availabilityLabel): static
+    {
+        $this->availabilityLabel = $availabilityLabel;
+
+        return $this;
+    }
+
+    public function getAvailabilityText(): string
+    {
+        return $this->availabilityLabel
+            ?: ($this->available ? 'Disponible' : 'Non disponible');
+    }
+
+    public function isMaintenance(): bool
+    {
+        return $this->maintenance;
+    }
+
+    public function setMaintenance(?bool $maintenance): static
+    {
+        $this->maintenance = (bool) $maintenance;
+
+        return $this;
+    }
+
+    public function getMaintenanceMessage(): ?string
+    {
+        return $this->maintenanceMessage;
+    }
+
+    public function setMaintenanceMessage(?string $maintenanceMessage): static
+    {
+        $this->maintenanceMessage = $maintenanceMessage;
+
+        return $this;
+    }
+
+    public function isShowMalt(): bool
+    {
+        return $this->showMalt;
+    }
+
+    public function setShowMalt(?bool $showMalt): static
+    {
+        $this->showMalt = (bool) $showMalt;
+
+        return $this;
+    }
+
+    /** Lien Malt à afficher, ou null si désactivé ou vide. */
+    public function getVisibleMaltUrl(): ?string
+    {
+        return $this->showMalt ? $this->maltUrl : null;
+    }
+
+    public function getCvFile(): ?string
+    {
+        return $this->cvFile;
+    }
+
+    public function setCvFile(?string $cvFile): static
+    {
+        $this->cvFile = $cvFile;
 
         return $this;
     }

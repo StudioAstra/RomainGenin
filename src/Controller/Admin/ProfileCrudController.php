@@ -8,7 +8,9 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ArrayField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\EmailField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\FileField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\FormField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ImageField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TelephoneField;
@@ -19,6 +21,9 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\UrlField;
 /** @extends AbstractCrudController<Profile> */
 class ProfileCrudController extends AbstractCrudController
 {
+    public const CV_UPLOAD_DIR = 'public/uploads/cv';
+    public const CV_BASE_PATH = 'uploads/cv';
+
     public static function getEntityFqcn(): string
     {
         return Profile::class;
@@ -58,9 +63,31 @@ class ProfileCrudController extends AbstractCrudController
             ->setUploadDir(ProjectCrudController::UPLOAD_DIR)
             ->setUploadedFileNamePattern('photo-[randomhash].[extension]')
             ->mimeTypes('image/jpeg,image/png,image/webp,image/avif')
-            ->maxSize('8M')
-            ->setHelp('Format portrait 4:5 conseillé.')
+            ->maxSize('20M')
+            ->deleteReplacedFile()
+            ->setHelp('Format portrait 4:5 conseillé. Convertie automatiquement en WebP et redimensionnée.')
             ->setColumns(6);
+
+        yield FormField::addFieldset('Mode maintenance');
+        yield BooleanField::new('maintenance', 'Site en maintenance')
+            ->setHelp('Les visiteurs voient une page d\'attente avec le CV et un bouton de contact. Connecté à l\'admin, vous voyez toujours le site.')
+            ->renderAsSwitch()
+            ->setColumns(6);
+        yield TextareaField::new('maintenanceMessage', 'Message (optionnel)')
+            ->setHelp('Vide : « Le site fait peau neuve, il revient très vite. »')
+            ->setNumOfRows(2)
+            ->setColumns(6)
+            ->hideOnIndex();
+
+        yield FormField::addFieldset('Disponibilité');
+        yield BooleanField::new('available', 'Disponible')
+            ->setHelp('Badge vert « disponible » ou gris « indisponible » sur le site.')
+            ->renderAsSwitch()
+            ->setColumns(6);
+        yield TextField::new('availabilityLabel', 'Texte du badge (optionnel)')
+            ->setHelp('Ex. « Disponible à partir de janvier 2027 ». Vide : « Disponible » ou « Non disponible ».')
+            ->setColumns(6)
+            ->hideOnIndex();
 
         yield FormField::addFieldset('Introduction');
         yield TextareaField::new('intro', 'Texte d\'introduction')->setNumOfRows(5)->hideOnIndex();
@@ -74,5 +101,21 @@ class ProfileCrudController extends AbstractCrudController
         yield TelephoneField::new('phone', 'Téléphone')->setColumns(6)->hideOnIndex();
         yield UrlField::new('linkedinUrl', 'LinkedIn')->setColumns(6)->hideOnIndex();
         yield UrlField::new('maltUrl', 'Malt')->setColumns(6)->hideOnIndex();
+        yield BooleanField::new('showMalt', 'Afficher le lien Malt')
+            ->setHelp('Dans le menu et le bloc contact.')
+            ->renderAsSwitch()
+            ->setColumns(6)
+            ->hideOnIndex();
+
+        yield FormField::addFieldset('CV');
+        yield FileField::new('cvFile', 'CV (PDF)')
+            ->setBasePath(self::CV_BASE_PATH)
+            ->setUploadDir(self::CV_UPLOAD_DIR)
+            ->setUploadedFileNamePattern('cv-[randomhash].[extension]')
+            ->mimeTypes('application/pdf', 'Le CV doit être un fichier PDF.')
+            ->maxSize('10M')
+            ->deleteReplacedFile()
+            ->setHelp('Bouton « CV » dans le menu et le bloc contact. Sans fichier, les boutons sont masqués.')
+            ->hideOnIndex();
     }
 }

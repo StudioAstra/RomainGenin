@@ -1,0 +1,19 @@
+{# Badge de disponibilité : point vert animé si disponible, gris sinon #}
+{% macro availability(profile, inverted = false) %}
+    <div class="inline-flex items-center gap-2.5 self-start border px-3 py-1.5 text-[12px] font-semibold tracking-[.06em] uppercase {{ inverted ? 'border-white/70 text-white' : 'border-ink' }}">
+        <span class="relative flex size-2.5 shrink-0" aria-hidden="true">
+            {% if profile.available %}
+                <span class="absolute inline-flex size-full animate-ping rounded-full {{ inverted ? 'bg-white' : 'bg-accent' }} opacity-60 motion-reduce:animate-none"></span>
+                <span class="relative inline-flex size-2.5 rounded-full {{ inverted ? 'bg-white' : 'bg-accent' }}"></span>
+            {% else %}
+                <span class="relative inline-flex size-2.5 rounded-full {{ inverted ? 'bg-white/50' : 'bg-faint/60' }}"></span>
+            {% endif %}
+        </span>
+        <span class="{{ profile.available or inverted ? '' : 'text-faint' }}">{{ profile.availabilityText }}</span>
+    </div>
+{% endmacro %}
+
+{# Lien mailto avec un objet prérempli #}
+{% macro mailto(profile) -%}
+    mailto:{{ profile.email }}?subject={{ ('Prise de contact via ' ~ app.request.host)|url_encode }}
+{%- endmacro %}

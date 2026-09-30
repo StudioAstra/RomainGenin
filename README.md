@@ -8,14 +8,16 @@ La maquette d'origine (export Claude Design) est conservée dans [`design/`](des
 
 | Menu | Contenu |
 |---|---|
-| Profil, poste & photo | nom, poste occupé + sous-titre, photo, localisation, intro, compétences, loisirs, e-mail, téléphone, LinkedIn, Malt |
-| Projets | projets **pro** (grille de cartes) et **perso** (grande carte type StudioAstra) : visuel, client, rôle, technos, lien, ordre, publié/brouillon |
+| Profil, poste & photo | **mode maintenance** (page d'attente avec CV + contact pour les visiteurs, l'admin voit le site), **disponibilité** (badge dispo/indispo + texte optionnel), nom, poste occupé + sous-titre, photo, localisation, intro, compétences, loisirs, e-mail, téléphone, LinkedIn, Malt (+ interrupteur pour l'afficher ou non), **CV en PDF** (bouton « CV » dans le menu et « Télécharger mon CV » dans le contact, masqués sans fichier) |
+| Projets | projets **pro** (grille de cartes) et **perso** (grande carte type StudioAstra) : visuel, client, rôle, technos, lien, publié/brouillon. **Ordre par glisser-déposer** (⠿) directement dans la liste |
 | Expériences | poste, entreprise, dates (fin vide = « auj. »), description, ordre, publié |
 | Certifications | intitulé, précision, mise en avant (bloc plein vert) |
 | Formation | diplôme, établissement, années |
 
 Les sections vides sont masquées et la numérotation (01, 02…) se recalcule toute seule.
-Les images envoyées sont stockées dans `public/uploads/images` (volume Docker `uploads`).
+Les fichiers envoyés sont stockés dans `public/uploads/images` et `public/uploads/cv` (volume Docker `uploads`).
+
+**Optimisation des images** : chaque photo ou visuel envoyé est automatiquement redimensionné (1000 px pour la photo de profil, 1600 px pour les projets), corrigé selon l'orientation EXIF et converti en WebP (qualité 80), puis l'original est supprimé. Les images déjà importées sont traitées au démarrage du conteneur (`bin/console app:images:optimize`, sans effet sur celles déjà optimisées).
 
 ## Déploiement sur Coolify
 
@@ -58,6 +60,14 @@ Ou tout en Docker :
 ADMIN_EMAIL=admin@example.com ADMIN_PASSWORD=changez-moi-svp \
   docker compose -f docker-compose.yaml -f docker-compose.local.yaml up --build
 # → http://localhost:8080  et  http://localhost:8080/admin
+```
+
+## Tests
+
+```bash
+php bin/console doctrine:database:create --env=test
+php bin/console doctrine:migrations:migrate -n --env=test
+php bin/phpunit
 ```
 
 ## Où modifier quoi
