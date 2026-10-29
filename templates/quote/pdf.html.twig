@@ -1,0 +1,239 @@
+{#- Devis au format A4 rendu par Dompdf : mise en page en tableaux (pas de flex/grid). -#}
+{% macro eur(cents) %}{{ (cents / 100)|format_currency('EUR', locale: 'fr') }}{% endmacro %}
+{% macro rate(value) %}{{ value|number_format(value == value|round ? 0 : 2, ',', ' ') }} %{% endmacro %}
+{% import _self as f %}
+{% set accent = '#1f7a4a' %}
+{% set ink = '#2b2e2c' %}
+{% set muted = '#5a5f5b' %}
+{% set line = '#c9ccd3' %}
+{% set show_vat = not (company.vatExempt ?? true) %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Devis {{ quote.number }}</title>
+<style>
+    @page { margin: 18mm 16mm 26mm; }
+    * { box-sizing: border-box; }
+    body { font-family: 'DejaVu Sans', sans-serif; font-size: 9pt; line-height: 1.45; color: {{ ink }}; }
+    table { width: 100%; border-collapse: collapse; }
+    td, th { vertical-align: top; padding: 0; }
+    .label { font-size: 7pt; font-weight: bold; letter-spacing: .08em; text-transform: uppercase; color: {{ muted }}; }
+    .meta { padding: 2pt 0; line-height: 12pt; vertical-align: middle; }
+    .accent { color: {{ accent }}; }
+    .muted { color: {{ muted }}; }
+    .rule { border-bottom: 1.5pt solid {{ ink }}; }
+    .title { font-size: 26pt; font-weight: bold; letter-spacing: -.02em; line-height: 1; }
+    .lines th { font-size: 7pt; font-weight: bold; letter-spacing: .06em; text-transform: uppercase; text-align: left; padding: 6pt 6pt 6pt 0; border-bottom: 1.5pt solid {{ ink }}; }
+    .lines td { padding: 7pt 6pt 7pt 0; border-bottom: .5pt solid {{ line }}; }
+    .num { text-align: right; white-space: nowrap; }
+    .lines th.num, .lines td.num { padding-right: 0; padding-left: 6pt; }
+    .totals td { padding: 4pt 0; }
+    .totals .grand td { border-top: 1.5pt solid {{ ink }}; padding-top: 7pt; font-size: 12pt; font-weight: bold; }
+    .box { border: .75pt solid {{ ink }}; padding: 9pt 10pt; }
+    .pre { white-space: pre-line; }
+    footer { position: fixed; bottom: -16mm; left: 0; right: 0; font-size: 7pt; color: {{ muted }}; border-top: .5pt solid {{ line }}; padding-top: 5pt; }
+</style>
+</head>
+<body>
+
+<footer>
+    <table><tr>
+        <td>
+            {{ company.name ?? '' }}{% if company.legalForm ?? null %} · {{ company.legalForm }}{% endif %}{% if company.siret ?? null %} · SIRET {{ company.siret }}{% endif %}
+            {% if company.vatExempt ?? true %} · TVA non applicable, art. 293 B du CGI{% elseif company.vatNumber %} · TVA {{ company.vatNumber }}{% endif %}
+        </td>
+        <td style="width: 12%">{# numéro de page ajouté par QuotePdfRenderer #}</td>
+    </tr></table>
+</footer>
+
+{# En-tête : titre + émetteur #}
+<table>
+    <tr>
+        <td style="width: 55%; padding-bottom: 12pt">
+            <div class="title">Devis</div>
+            <div style="font-size: 11pt; font-weight: bold; margin-top: 4pt" class="accent">{{ quote.number ?? 'Brouillon' }}</div>
+        </td>
+        <td style="padding-bottom: 12pt; text-align: right">
+            <div style="font-size: 11pt; font-weight: bold">{{ company.name ?? '' }}</div>
+            {% if company.legalForm ?? null %}<div class="muted">{{ company.legalForm }}</div>{% endif %}
+            {% if company.address ?? null %}<div class="pre">{{ company.address }}</div>{% endif %}
+            {% if company.email ?? null %}<div>{{ company.email }}</div>{% endif %}
+            {% if company.phone ?? null %}<div>{{ company.phone }}</div>{% endif %}
+            {% if company.website ?? null %}<div class="accent">{{ company.website|replace({'https://': '', 'http://': ''})|trim('/') }}</div>{% endif %}
+        </td>
+    </tr>
+</table>
+<div class="rule"></div>
+
+{# Client + dates #}
+<table style="margin-top: 14pt">
+    <tr>
+        <td style="width: 55%; padding-right: 16pt">
+            <div class="label">Client</div>
+            <div style="font-size: 10.5pt; font-weight: bold; margin-top: 3pt">{{ quote.client.name }}</div>
+            {% if quote.client.contactName %}<div>{{ quote.client.contactName }}</div>{% endif %}
+            {% if quote.client.address %}<div class="pre">{{ quote.client.address }}</div>{% endif %}
+            {% if quote.client.email %}<div>{{ quote.client.email }}</div>{% endif %}
+            {% if quote.client.siret %}<div class="muted">SIRET {{ quote.client.siret }}</div>{% endif %}
+        </td>
+        <td>
+            <table>
+                <tr><td class="label meta">Date</td><td class="num meta">{{ quote.issueDate|date('d/m/Y') }}</td></tr>
+                {% if quote.validUntil %}<tr><td class="label meta">Valable jusqu'au</td><td class="num meta">{{ quote.validUntil|date('d/m/Y') }}</td></tr>{% endif %}
+            </table>
+        </td>
+    </tr>
+</table>
+
+{# Objet #}
+<div style="margin-top: 18pt">
+    <div class="label">Objet</div>
+    <div style="font-size: 12pt; font-weight: bold; margin-top: 3pt">{{ quote.title }}</div>
+    {% if quote.introduction %}<div class="pre" style="margin-top: 6pt">{{ quote.introduction }}</div>{% endif %}
+</div>
+
+{% macro line_cells(l, show_vat) %}
+    {% import _self as f %}
+    {% set parts = (l.description ?? '')|split("\n", 2) %}
+    <td>
+        <div style="font-weight: bold">{{ parts[0] }}</div>
+        {% if parts[1] is defined and parts[1]|trim %}<div class="pre muted" style="margin-top: 2pt">{{ parts[1]|trim }}</div>{% endif %}
+    </td>
+    <td class="num">{{ l.quantity|number_format(l.quantity == l.quantity|round ? 0 : 2, ',', ' ') }}{% if l.unit %} {{ l.unit }}{% endif %}</td>
+    <td class="num">{{ f.eur(l.unitPrice ?? 0) }}</td>
+    {% if show_vat %}<td class="num">{{ f.rate(l.vatRate) }}</td>{% endif %}
+{% endmacro %}
+
+{# Prestations ponctuelles #}
+{% if quote.oneOffLines is not empty %}
+<table class="lines" style="margin-top: 14pt">
+    <thead>
+        <tr>
+            <th>Désignation</th>
+            <th class="num" style="width: 11%">Qté</th>
+            <th class="num" style="width: 15%">P.U. HT</th>
+            {% if show_vat %}<th class="num" style="width: 9%">TVA</th>{% endif %}
+            <th class="num" style="width: 16%">Total HT</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for l in quote.oneOffLines %}
+            <tr>{{ _self.line_cells(l, show_vat) }}<td class="num">{{ f.eur(l.totalExclTax) }}</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{# Totaux #}
+<table style="margin-top: 12pt; page-break-inside: avoid">
+    <tr>
+        <td style="width: 52%"></td>
+        <td>
+            <table class="totals">
+                <tr><td>Total HT</td><td class="num">{{ f.eur(quote.totalExclTax) }}</td></tr>
+                {% if show_vat %}
+                    {% for rate, row in quote.vatBreakdown|filter(row => row.vat > 0) %}
+                        <tr><td class="muted">TVA {{ f.rate(rate) }}</td><td class="num">{{ f.eur(row.vat) }}</td></tr>
+                    {% endfor %}
+                    <tr class="grand"><td>Total TTC</td><td class="num">{{ f.eur(quote.totalInclTax) }}</td></tr>
+                {% else %}
+                    <tr><td class="muted" colspan="2" style="font-size: 7.5pt">TVA non applicable, art. 293 B du CGI</td></tr>
+                    <tr class="grand"><td>Net à payer</td><td class="num">{{ f.eur(quote.totalExclTax) }}</td></tr>
+                {% endif %}
+            </table>
+        </td>
+    </tr>
+</table>
+{% endif %}
+
+{# Abonnements (hébergement, nom de domaine…), facturés à chaque période #}
+{% if quote.recurringLines is not empty %}
+<div style="margin-top: 18pt">
+    <div class="label">Abonnements</div>
+    <div class="muted" style="font-size: 7.5pt; margin-top: 2pt">Facturés à chaque période, en plus{% if quote.oneOffLines is not empty %} du montant ci-dessus{% endif %}.</div>
+    <table class="lines" style="margin-top: 6pt">
+        <thead>
+            <tr>
+                <th>Désignation</th>
+                <th class="num" style="width: 11%">Qté</th>
+                <th class="num" style="width: 15%">P.U. HT</th>
+                {% if show_vat %}<th class="num" style="width: 9%">TVA</th>{% endif %}
+                <th class="num" style="width: 20%">Montant HT</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for l in quote.recurringLines %}
+                <tr>{{ _self.line_cells(l, show_vat) }}<td class="num">{{ f.eur(l.totalExclTax) }} {{ l.effectiveRecurrence.suffix }}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <table style="margin-top: 8pt">
+        <tr>
+            <td style="width: 52%"></td>
+            <td>
+                <table class="totals">
+                    {% for row in quote.recurringTotals %}
+                        <tr>
+                            <td style="font-weight: bold">Total {{ row.recurrence.label|lower }} {{ show_vat ? 'TTC' : 'HT' }}</td>
+                            <td class="num" style="font-weight: bold">{{ f.eur(show_vat ? row.inclTax : row.exclTax) }} {{ row.recurrence.suffix }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </td>
+        </tr>
+    </table>
+</div>
+{% endif %}
+
+{# Paiement en plusieurs fois #}
+{% if quote.installments is not empty and quote.oneOffLines is not empty %}
+<div style="margin-top: 18pt">
+    <div class="label">Échéancier de paiement</div>
+    <table class="lines" style="margin-top: 6pt">
+        <thead>
+            <tr>
+                <th>Échéance</th>
+                <th>Exigible</th>
+                <th class="num" style="width: 11%">Part</th>
+                <th class="num" style="width: 20%">Montant{{ show_vat ? ' TTC' : '' }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in quote.paymentSchedule %}
+                <tr>
+                    <td style="font-weight: bold">{{ row.installment.label }}</td>
+                    <td>{{ row.installment.dueText }}{% if row.installment.dueDate %}{{ row.installment.dueText ? ' · ' : '' }}le {{ row.installment.dueDate|date('d/m/Y') }}{% endif %}</td>
+                    <td class="num">{{ f.rate(row.installment.percent) }}</td>
+                    <td class="num">{{ f.eur(row.amount) }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{# Conditions + bon pour accord #}
+<table style="margin-top: 22pt; page-break-inside: avoid">
+    <tr>
+        <td style="width: 55%; padding-right: 16pt">
+            {% if quote.conditions %}
+                <div class="label">Conditions</div>
+                <div class="pre" style="margin-top: 4pt">{{ quote.conditions }}</div>
+            {% endif %}
+            {% if company.iban ?? null %}
+                <div class="label" style="margin-top: 10pt">Coordonnées bancaires</div>
+                <div style="margin-top: 4pt">IBAN {{ company.iban }}{% if company.bic %}<br>BIC {{ company.bic }}{% endif %}</div>
+            {% endif %}
+        </td>
+        <td>
+            <div class="box">
+                <div class="label">Bon pour accord</div>
+                <div class="muted" style="margin-top: 4pt; font-size: 7.5pt">Date, signature et mention « Bon pour accord »</div>
+                <div style="height: 62pt"></div>
+            </div>
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>

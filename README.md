@@ -13,6 +13,11 @@ La maquette d'origine (export Claude Design) est conservée dans [`design/`](des
 | Expériences | poste, entreprise, dates (fin vide = « auj. »), description, ordre, publié |
 | Certifications | intitulé, précision, mise en avant (bloc plein vert) |
 | Formation | diplôme, établissement, années |
+| **Devis** | devis numérotés automatiquement (`DEV-2026-001`, remis à 1 chaque année), client, statut (brouillon / envoyé / accepté / refusé), lignes (depuis le catalogue ou saisies à la main ; **ponctuelles ou récurrentes** mensuel/trimestriel/annuel, affichées à part), totaux HT/TVA/TTC, **échéancier de paiement** (acompte, versements, solde en % — doit totaliser 100 %), conditions. Actions **PDF** (A4 avec « Bon pour accord »), **Dupliquer** et, sur un devis accepté, **Créer les abonnements** |
+| **Abonnements** | hébergements, noms de domaine, maintenance… par client : périodicité, prix, prochain renouvellement (badge « dans X j » / « en retard »), fournisseur et coût (marge), actif/résilié. Action **Renouvelé** (passe à l'échéance suivante). Badge dans le menu : abonnements à renouveler sous 30 jours |
+| Clients | raison sociale, contact, adresse, SIRET, notes |
+| Produits & prestations | catalogue réutilisable dans les devis : nom, description, unité, prix HT, TVA, **facturation ponctuelle ou récurrente**, actif |
+| Mon entreprise | émetteur des devis : identité, SIRET, adresse, **franchise de TVA** (mention art. 293 B du CGI), IBAN/BIC, validité et conditions par défaut |
 
 Les sections vides sont masquées et la numérotation (01, 02…) se recalcule toute seule.
 Les fichiers envoyés sont stockés dans `public/uploads/images` et `public/uploads/cv` (volume Docker `uploads`).
@@ -75,5 +80,6 @@ php bin/phpunit
 - Couleurs / police (tokens Tailwind) : `assets/styles/app.css` (`@theme`)
 - Page : `templates/home/index.html.twig`
 - Admin : `src/Controller/Admin/`
+- Modèle PDF des devis : `templates/quote/pdf.html.twig` (rendu par Dompdf, police DejaVu Sans)
 - Contenu initial : `src/Command/SeedCommand.php` (photo : `resources/seed/photo.webp`)
 - Tailwind est figé en `v4.3.0` dans `config/packages/symfonycasts_tailwind.yaml`
