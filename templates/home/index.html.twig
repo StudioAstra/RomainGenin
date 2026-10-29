@@ -33,9 +33,10 @@
     {# Liens de navigation, dans l'ordre des sections : partagés entre le menu desktop et le tiroir mobile #}
     {% set nav_links = [] %}
     {% if experiences is not empty %}{% set nav_links = nav_links|merge([{label: 'Expériences', href: '#experiences'}]) %}{% endif %}
-    {% if pro_projects is not empty %}{% set nav_links = nav_links|merge([{label: 'Projets', href: '#projets-pro'}]) %}{% endif %}
+    {% if pro_projects is not empty %}{% set nav_links = nav_links|merge([{label: freelance_projects is empty ? 'Projets' : 'Projets pro', href: '#projets-pro'}]) %}{% endif %}
+    {% if freelance_projects is not empty %}{% set nav_links = nav_links|merge([{label: 'Freelance', href: '#projets-freelance'}]) %}{% endif %}
     {% set nav_links = nav_links|merge([{label: 'Compétences', href: '#competences'}]) %}
-    {% if perso_projects is not empty %}{% set nav_links = nav_links|merge([{label: pro_projects is empty ? 'Projets' : 'Projets perso', href: '#projets', mobile_only: pro_projects is not empty}]) %}{% endif %}
+    {% if perso_projects is not empty %}{% set nav_links = nav_links|merge([{label: pro_projects is empty and freelance_projects is empty ? 'Projets' : 'Projets perso', href: '#projets', mobile_only: pro_projects is not empty or freelance_projects is not empty}]) %}{% endif %}
 
     <nav class="sticky top-0 z-10 flex items-center justify-between gap-6 border-b-2 border-ink bg-paper py-[18px]">
         <a href="#top" class="text-[15px] font-extrabold tracking-[-.02em]">{{ profile.fullName }}</a>
@@ -138,28 +139,18 @@
             <div class="section-label"><span class="text-accent">{{ '%02d'|format(n) }}</span><span>Projets pro</span></div>
             <p class="m-0 text-[14px] leading-[1.5] text-muted">Liste non exhaustive : certains projets, soumis à confidentialité, ne sont pas présentés.</p>
         </div>
-        <div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,300px),1fr))] gap-4">
-            {% for project in pro_projects %}
-                {% set tag = project.url ? 'a' : 'article' %}
-                <{{ tag }} {% if project.url %}href="{{ project.url }}" target="_blank" rel="noopener" {% endif %}class="flex flex-col gap-3 border border-ink p-4{{ project.url ? ' hover:bg-hover' }}">
-                    {% if project.image %}
-                        <img src="{{ asset(uploads ~ project.image) }}" alt="{{ project.title }}" class="aspect-[16/10] w-full object-cover" loading="lazy">
-                    {% else %}
-                        <div class="image-placeholder aspect-[16/10] w-full">visuel {{ project.title }}</div>
-                    {% endif %}
-                    <div class="flex flex-col gap-1">
-                        <h3 class="m-0 text-[18px] font-semibold tracking-[-.01em]">{{ project.title }}{% if project.url %} ↗{% endif %}</h3>
-                        {% if project.client %}<div class="text-[13px] font-medium text-accent">{{ project.client }}</div>{% endif %}
-                        {% if project.description %}<p class="mt-1 mb-0 text-[14px] leading-[1.5] text-muted">{{ project.description }}</p>{% endif %}
-                    </div>
-                    {% if project.technologies is not empty %}
-                    <div class="mt-auto flex flex-wrap gap-1.5">
-                        {% for techno in project.technologies %}<span class="tag-sm">{{ techno }}</span>{% endfor %}
-                    </div>
-                    {% endif %}
-                </{{ tag }}>
-            {% endfor %}
+        {{ ui.project_grid(pro_projects) }}
+    </section>
+    {% endif %}
+
+    {% if freelance_projects is not empty %}
+    {% set n = n + 1 %}
+    <section id="projets-freelance" class="flex flex-col gap-7 border-b-2 border-ink py-[clamp(36px,5vw,64px)]">
+        <div class="flex flex-col gap-2">
+            <div class="section-label"><span class="text-accent">{{ '%02d'|format(n) }}</span><span>Projets freelance</span></div>
+            <p class="m-0 text-[14px] leading-[1.5] text-muted">Missions réalisées en indépendant, en tant qu'auto-entrepreneur.</p>
         </div>
+        {{ ui.project_grid(freelance_projects) }}
     </section>
     {% endif %}
 

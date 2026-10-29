@@ -184,7 +184,7 @@ class Profile
 
     public function setPhoto(?string $photo): static
     {
-        $this->photo = $photo;
+        $this->photo = '' === $photo ? null : $photo;
 
         return $this;
     }
@@ -316,7 +316,7 @@ class Profile
 
     public function setCvFile(?string $cvFile): static
     {
-        $this->cvFile = $cvFile;
+        $this->cvFile = '' === $cvFile ? null : $cvFile;
 
         return $this;
     }

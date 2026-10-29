@@ -7,14 +7,19 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 enum ProjectKind: string implements TranslatableInterface
 {
+    /** Projet réalisé en agence */
     case Pro = 'pro';
+    /** Projet réalisé en indépendant (auto-entrepreneur) */
+    case Freelance = 'freelance';
+    /** Projet personnel */
     case Perso = 'perso';
 
     public function label(): string
     {
         return match ($this) {
-            self::Pro => 'Projet pro',
-            self::Perso => 'Projet perso',
+            self::Pro => 'Pro (agence)',
+            self::Freelance => 'Freelance',
+            self::Perso => 'Perso',
         };
     }
 

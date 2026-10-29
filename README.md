@@ -9,7 +9,7 @@ La maquette d'origine (export Claude Design) est conservée dans [`design/`](des
 | Menu | Contenu |
 |---|---|
 | Profil, poste & photo | **mode maintenance** (page d'attente avec CV + contact pour les visiteurs, l'admin voit le site), **disponibilité** (badge dispo/indispo + texte optionnel), nom, poste occupé + sous-titre, photo, localisation, intro, compétences, loisirs, e-mail, téléphone, LinkedIn, Malt (+ interrupteur pour l'afficher ou non), **CV en PDF** (bouton « CV » dans le menu et « Télécharger mon CV » dans le contact, masqués sans fichier) |
-| Projets | projets **pro** (grille de cartes) et **perso** (grande carte type StudioAstra) : visuel, client, rôle, technos, lien, publié/brouillon. **Ordre par glisser-déposer** (⠿) directement dans la liste |
+| Projets | projets **pro** (en agence) et **freelance** (en auto-entrepreneur) en grilles de cartes, **perso** en grande carte type StudioAstra : visuel, client, rôle, technos, lien, publié/brouillon. **Ordre par glisser-déposer** (⠿) directement dans la liste |
 | Expériences | poste, entreprise, dates (fin vide = « auj. »), description, ordre, publié |
 | Certifications | intitulé, précision, mise en avant (bloc plein vert) |
 | Formation | diplôme, établissement, années |

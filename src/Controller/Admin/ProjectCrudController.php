@@ -3,6 +3,7 @@
 namespace App\Controller\Admin;
 
 use App\Entity\Project;
+use App\Enum\ProjectKind;
 use App\Repository\ProjectRepository;
 use App\Service\ImageOptimizer;
 use Doctrine\ORM\EntityManagerInterface;
@@ -116,9 +117,12 @@ class ProjectCrudController extends AbstractCrudController
             ->deleteReplacedFile()
             ->setHelp('Format 16:10 conseillé. Converti automatiquement en WebP et redimensionné.');
         yield ChoiceField::new('kind', 'Type')
-            ->renderAsBadges(['pro' => 'primary', 'perso' => 'secondary']);
+            ->setChoices(ProjectKind::cases())
+            ->renderAsNativeWidget()
+            ->renderAsBadges(['pro' => 'primary', 'freelance' => 'success', 'perso' => 'secondary'])
+            ->setHelp('Pro : en agence. Freelance : en auto-entrepreneur. Perso : projet personnel.');
         yield TextField::new('title', 'Nom du projet');
-        yield TextField::new('client', 'Client · Agence');
+        yield TextField::new('client', 'Client / Agence');
         yield TextareaField::new('description', 'Rôle / réalisation')->hideOnIndex();
         yield ArrayField::new('technologies', 'Technos')->setRequired(false)->hideOnIndex();
         yield UrlField::new('url', 'Lien')->hideOnIndex();
