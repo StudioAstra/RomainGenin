@@ -44,6 +44,30 @@ class HomeControllerTest extends WebTestCase
         self::assertStringContainsString('subject=', $crawler->filter('#contact a[href^="mailto:"]')->attr('href'));
     }
 
+    public function testProjectsAreSplitByKind(): void
+    {
+        $this->createProfile();
+        $this->em->persist((new Project())->setKind(ProjectKind::Pro)->setTitle('Site agence'));
+        $this->em->persist((new Project())->setKind(ProjectKind::Freelance)->setTitle('Mission freelance'));
+        $this->em->persist((new Project())->setKind(ProjectKind::Perso)->setTitle('Projet perso'));
+        $this->em->flush();
+
+        $crawler = $this->client->request('GET', '/');
+
+        self::assertSelectorTextContains('#projets-pro', 'Site agence');
+        self::assertSelectorTextNotContains('#projets-pro', 'Mission freelance');
+        self::assertSelectorTextContains('#projets-freelance', 'Mission freelance');
+        self::assertSelectorTextContains('#projets', 'Projet perso');
+        self::assertSame(
+            ['#projets-pro', '#projets-freelance', '#competences'],
+            array_values(array_filter(
+                $crawler->filter('nav a')->each(fn ($a) => $a->attr('href')),
+                fn ($href) => \in_array($href, ['#experiences', '#projets-pro', '#projets-freelance', '#competences'], true),
+            )),
+            'menu dans l\'ordre des sections',
+        );
+    }
+
     public function testMaintenancePageForVisitorsWithCvAndContact(): void
     {
         $this->createProfile(maintenance: true);

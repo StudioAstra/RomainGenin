@@ -41,6 +41,7 @@ class HomeController extends AbstractController
             'profile' => $profile,
             'experiences' => $experiences->findPublished(),
             'pro_projects' => $projects->findPublished(ProjectKind::Pro),
+            'freelance_projects' => $projects->findPublished(ProjectKind::Freelance),
             'perso_projects' => $projects->findPublished(ProjectKind::Perso),
             'certifications' => $certifications->findOrdered(),
             'educations' => $educations->findOrdered(),

@@ -17,3 +17,30 @@
 {% macro mailto(profile) -%}
     mailto:{{ profile.email }}?subject={{ ('Prise de contact via ' ~ app.request.host)|url_encode }}
 {%- endmacro %}
+
+{# Grille de cartes projets (pro et freelance) #}
+{% macro project_grid(projects) %}
+    {% set uploads = 'uploads/images/' %}
+    <div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,300px),1fr))] gap-4">
+        {% for project in projects %}
+            {% set tag = project.url ? 'a' : 'article' %}
+            <{{ tag }} {% if project.url %}href="{{ project.url }}" target="_blank" rel="noopener" {% endif %}class="flex flex-col gap-3 border border-ink p-4{{ project.url ? ' hover:bg-hover' }}">
+                {% if project.image %}
+                    <img src="{{ asset(uploads ~ project.image) }}" alt="{{ project.title }}" class="aspect-[16/10] w-full object-cover" loading="lazy">
+                {% else %}
+                    <div class="image-placeholder aspect-[16/10] w-full">visuel {{ project.title }}</div>
+                {% endif %}
+                <div class="flex flex-col gap-1">
+                    <h3 class="m-0 text-[18px] font-semibold tracking-[-.01em]">{{ project.title }}{% if project.url %} ↗{% endif %}</h3>
+                    {% if project.client %}<div class="text-[13px] font-medium text-accent">{{ project.client }}</div>{% endif %}
+                    {% if project.description %}<p class="mt-1 mb-0 text-[14px] leading-[1.5] text-muted">{{ project.description }}</p>{% endif %}
+                </div>
+                {% if project.technologies is not empty %}
+                <div class="mt-auto flex flex-wrap gap-1.5">
+                    {% for techno in project.technologies %}<span class="tag-sm">{{ techno }}</span>{% endfor %}
+                </div>
+                {% endif %}
+            </{{ tag }}>
+        {% endfor %}
+    </div>
+{% endmacro %}
