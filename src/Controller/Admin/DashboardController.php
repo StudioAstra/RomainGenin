@@ -3,6 +3,7 @@
 namespace App\Controller\Admin;
 
 use App\Entity\User;
+use App\Repository\CompanyRepository;
 use App\Repository\ProfileRepository;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
@@ -20,6 +21,7 @@ class DashboardController extends AbstractDashboardController
 {
     public function __construct(
         private readonly ProfileRepository $profiles,
+        private readonly CompanyRepository $companies,
     ) {
     }
 
@@ -63,6 +65,16 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::linkTo(ExperienceCrudController::class, 'Expériences', 'fa fa-briefcase');
         yield MenuItem::linkTo(CertificationCrudController::class, 'Certifications', 'fa fa-certificate');
         yield MenuItem::linkTo(EducationCrudController::class, 'Formation', 'fa fa-graduation-cap');
+
+        yield MenuItem::section('Devis');
+        yield MenuItem::linkTo(QuoteCrudController::class, 'Devis', 'fa fa-file-invoice');
+        yield MenuItem::linkTo(ClientCrudController::class, 'Clients', 'fa fa-address-book');
+        yield MenuItem::linkTo(ProductCrudController::class, 'Produits & prestations', 'fa fa-tags');
+        $company = $this->companies->findCurrent();
+        $companyItem = MenuItem::linkTo(CompanyCrudController::class, 'Mon entreprise', 'fa fa-building');
+        yield null !== $company
+            ? $companyItem->setAction(Action::EDIT)->setEntityId($company->getId())
+            : $companyItem->setAction(Action::NEW);
 
         yield MenuItem::section();
         yield MenuItem::linkToRoute('Voir le site', 'fa fa-arrow-up-right-from-square', 'home')->setLinkTarget('_blank');
