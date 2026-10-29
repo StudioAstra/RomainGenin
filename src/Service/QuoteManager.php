@@ -36,6 +36,14 @@ class QuoteManager
         foreach (array_values($quote->getLines()->toArray()) as $i => $line) {
             $line->fillFromProduct();
             $line->setPosition(($i + 1) * 10);
+            // Franchise en base : aucune TVA n'est facturée
+            if ($company?->isVatExempt() ?? true) {
+                $line->setVatRate(0);
+            }
+        }
+
+        foreach (array_values($quote->getInstallments()->toArray()) as $i => $installment) {
+            $installment->setPosition(($i + 1) * 10);
         }
 
         if (null === $quote->getNumber()) {

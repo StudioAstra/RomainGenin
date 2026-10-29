@@ -5,6 +5,7 @@ namespace App\Controller\Admin;
 use App\Entity\User;
 use App\Repository\CompanyRepository;
 use App\Repository\ProfileRepository;
+use App\Repository\SubscriptionRepository;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Assets;
@@ -22,6 +23,7 @@ class DashboardController extends AbstractDashboardController
     public function __construct(
         private readonly ProfileRepository $profiles,
         private readonly CompanyRepository $companies,
+        private readonly SubscriptionRepository $subscriptions,
     ) {
     }
 
@@ -68,6 +70,12 @@ class DashboardController extends AbstractDashboardController
 
         yield MenuItem::section('Devis');
         yield MenuItem::linkTo(QuoteCrudController::class, 'Devis', 'fa fa-file-invoice');
+        $subscriptionsItem = MenuItem::linkTo(SubscriptionCrudController::class, 'Abonnements', 'fa fa-rotate');
+        $due = $this->subscriptions->countDueBefore(new \DateTimeImmutable('+30 days'));
+        if ($due > 0) {
+            $subscriptionsItem->setBadge($due, 'warning', ['title' => 'À renouveler sous 30 jours']);
+        }
+        yield $subscriptionsItem;
         yield MenuItem::linkTo(ClientCrudController::class, 'Clients', 'fa fa-address-book');
         yield MenuItem::linkTo(ProductCrudController::class, 'Produits & prestations', 'fa fa-tags');
         $company = $this->companies->findCurrent();

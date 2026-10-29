@@ -13,7 +13,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: CompanyRepository::class)]
 class Company
 {
-    public const DEFAULT_CONDITIONS = "Acompte de 30 % à la signature, solde à la livraison.\nPaiement par virement bancaire à 30 jours.\nEn cas de retard de paiement, indemnité forfaitaire pour frais de recouvrement de 40 € (art. D. 441-5 du Code de commerce).";
+    public const DEFAULT_CONDITIONS = "Paiement par virement bancaire à réception de facture, selon l'échéancier ci-dessus le cas échéant.\nEn cas de retard de paiement, pénalités au taux légal et indemnité forfaitaire pour frais de recouvrement de 40 € (art. L. 441-10 et D. 441-5 du Code de commerce).";
 
     #[ORM\Id]
     #[ORM\GeneratedValue]

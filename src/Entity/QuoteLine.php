@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Enum\Recurrence;
 use App\Repository\QuoteLineRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -45,6 +46,10 @@ class QuoteLine
     #[Assert\Range(min: 0, max: 100)]
     private ?string $vatRate = null;
 
+    /** Null = périodicité du produit choisi, ponctuel sinon. */
+    #[ORM\Column(length: 20, nullable: true, enumType: Recurrence::class)]
+    private ?Recurrence $recurrence = null;
+
     #[ORM\Column]
     private int $position = 0;
 
@@ -83,6 +88,7 @@ class QuoteLine
         $this->unit ??= $this->product->getUnit();
         $this->unitPrice ??= $this->product->getUnitPrice();
         $this->vatRate ??= $this->product->getVatRate();
+        $this->recurrence ??= $this->product->getRecurrence();
     }
 
     public function duplicate(): self
@@ -94,9 +100,15 @@ class QuoteLine
         $copy->unit = $this->unit;
         $copy->unitPrice = $this->unitPrice;
         $copy->vatRate = $this->vatRate;
+        $copy->recurrence = $this->recurrence;
         $copy->position = $this->position;
 
         return $copy;
+    }
+
+    public function isRecurring(): bool
+    {
+        return $this->getEffectiveRecurrence()->isRecurring();
     }
 
     /** Total HT en centimes. */
@@ -192,6 +204,25 @@ class QuoteLine
         $this->vatRate = null === $vatRate || '' === $vatRate ? null : number_format((float) $vatRate, 2, '.', '');
 
         return $this;
+    }
+
+    /** Valeur saisie : null = selon le produit. */
+    public function getRecurrence(): ?Recurrence
+    {
+        return $this->recurrence;
+    }
+
+    public function setRecurrence(?Recurrence $recurrence): static
+    {
+        $this->recurrence = $recurrence;
+
+        return $this;
+    }
+
+    /** Périodicité appliquée : saisie, sinon celle du produit, sinon ponctuel. */
+    public function getEffectiveRecurrence(): Recurrence
+    {
+        return $this->recurrence ?? $this->product?->getRecurrence() ?? Recurrence::OneOff;
     }
 
     public function getPosition(): int

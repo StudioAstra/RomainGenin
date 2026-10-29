@@ -3,9 +3,11 @@
 namespace App\Controller\Admin;
 
 use App\Entity\Product;
+use App\Enum\Recurrence;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\MoneyField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\NumberField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
@@ -37,6 +39,12 @@ class ProductCrudController extends AbstractCrudController
             ->hideOnIndex();
         yield TextField::new('unit', 'Unité')->setHelp('forfait, jour, heure, page…')->setColumns(3);
         yield MoneyField::new('unitPrice', 'Prix unitaire HT')->setCurrency('EUR')->setStoredAsCents()->setColumns(3);
+        yield ChoiceField::new('recurrence', 'Facturation')
+            ->setChoices(Recurrence::cases())
+            ->renderAsNativeWidget()
+            ->renderAsBadges(['ponctuel' => 'secondary', 'mensuel' => 'info', 'trimestriel' => 'info', 'annuel' => 'primary'])
+            ->setHelp('Mensuel / annuel : abonnement (hébergement, nom de domaine, maintenance…).')
+            ->setColumns(3);
         yield NumberField::new('vatRate', 'TVA (%)')->setStoredAsString()->setNumDecimals(2)->setHelp('0 en franchise de TVA.')->setColumns(3);
         yield BooleanField::new('active', 'Actif')->setHelp('Inactif : n\'est plus proposé dans les devis.')->renderAsSwitch();
     }

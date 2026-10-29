@@ -3,7 +3,9 @@
 namespace App\Controller\Admin;
 
 use App\Entity\Quote;
+use App\Entity\Subscription;
 use App\Enum\QuoteStatus;
+use App\Repository\SubscriptionRepository;
 use App\Service\QuoteManager;
 use App\Service\QuotePdfRenderer;
 use Doctrine\ORM\EntityManagerInterface;
@@ -31,6 +33,7 @@ use Symfony\Component\HttpFoundation\Response;
 class QuoteCrudController extends AbstractCrudController
 {
     private const DUPLICATE_TOKEN = 'quote-duplicate';
+    private const SUBSCRIPTIONS_TOKEN = 'quote-subscriptions';
 
     public static function getEntityFqcn(): string
     {
@@ -65,7 +68,16 @@ class QuoteCrudController extends AbstractCrudController
                 'token' => $this->container->get('security.csrf.token_manager')->getToken(self::DUPLICATE_TOKEN.$quote->getId())->getValue(),
             ]));
 
+        $subscriptions = Action::new('createSubscriptions', 'Créer les abonnements', 'fa fa-rotate')
+            ->linkToUrl(fn (Quote $quote) => $this->generateUrl('admin_quote_subscriptions', [
+                'id' => $quote->getId(),
+                'token' => $this->container->get('security.csrf.token_manager')->getToken(self::SUBSCRIPTIONS_TOKEN.$quote->getId())->getValue(),
+            ]))
+            ->displayIf(static fn (Quote $quote) => QuoteStatus::Accepted === $quote->getStatus() && [] !== $quote->getRecurringLines());
+
         return $actions
+            ->add(Crud::PAGE_DETAIL, $subscriptions)
+            ->add(Crud::PAGE_EDIT, $subscriptions)
             ->add(Crud::PAGE_INDEX, $pdf)
             ->add(Crud::PAGE_INDEX, $duplicate)
             ->add(Crud::PAGE_EDIT, $pdf)
@@ -104,6 +116,17 @@ class QuoteCrudController extends AbstractCrudController
         yield MoneyField::new('totalExclTax', 'Total HT')->setCurrency('EUR')->setStoredAsCents()->hideOnForm();
         yield MoneyField::new('totalInclTax', 'Total TTC')->setCurrency('EUR')->setStoredAsCents()->onlyOnDetail();
 
+        yield FormField::addFieldset('Paiement');
+        yield CollectionField::new('installments', 'Échéancier')
+            ->useEntryCrudForm(QuoteInstallmentCrudController::class)
+            ->setEntryIsComplex()
+            ->renderExpanded()
+            ->allowAdd()
+            ->allowDelete()
+            ->setFormTypeOption('by_reference', false)
+            ->setHelp('Vide : paiement en une fois. Sinon, les parts doivent totaliser 100 % (ex. Acompte 30 % à la signature, Solde 70 % à la livraison). Les abonnements sont facturés à part.')
+            ->onlyOnForms();
+
         yield FormField::addFieldset('Conditions');
         yield TextareaField::new('conditions', 'Conditions')
             ->setHelp('Vide : conditions par défaut de « Mon entreprise ».')
@@ -122,6 +145,31 @@ class QuoteCrudController extends AbstractCrudController
                 \sprintf('devis-%s.pdf', $quote->getNumber() ?? 'brouillon'),
             ),
         ]);
+    }
+
+    /** Crée un abonnement par ligne récurrente d'un devis accepté (sans doublon). */
+    #[AdminRoute('/{id}/subscriptions', name: 'subscriptions', options: ['methods' => ['GET']])]
+    public function createSubscriptions(#[MapEntity(id: 'id')] Quote $quote, Request $request, SubscriptionRepository $subscriptions, EntityManagerInterface $em): RedirectResponse
+    {
+        if (!$this->isCsrfTokenValid(self::SUBSCRIPTIONS_TOKEN.$quote->getId(), (string) $request->query->get('token'))) {
+            throw $this->createAccessDeniedException('Jeton CSRF invalide.');
+        }
+
+        $existing = $subscriptions->findQuoteLineIds($quote);
+        $created = 0;
+        foreach ($quote->getRecurringLines() as $line) {
+            if (!\in_array($line->getId(), $existing, true)) {
+                $em->persist(Subscription::fromQuoteLine($line, new \DateTimeImmutable('today')));
+                ++$created;
+            }
+        }
+        $em->flush();
+
+        $this->addFlash(0 === $created ? 'info' : 'success', 0 === $created
+            ? 'Les abonnements de ce devis existent déjà.'
+            : \sprintf('%d abonnement(s) créé(s).', $created));
+
+        return $this->redirectToRoute('admin_subscription_index');
     }
 
     #[AdminRoute('/{id}/duplicate', name: 'duplicate', options: ['methods' => ['GET']])]

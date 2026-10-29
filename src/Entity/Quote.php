@@ -3,12 +3,14 @@
 namespace App\Entity;
 
 use App\Enum\QuoteStatus;
+use App\Enum\Recurrence;
 use App\Repository\QuoteRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 #[ORM\Entity(repositoryClass: QuoteRepository::class)]
 class Quote
@@ -56,12 +58,23 @@ class Quote
     #[Assert\Count(min: 1, minMessage: 'Ajoutez au moins une ligne au devis.')]
     private Collection $lines;
 
+    /**
+     * Échéancier (paiement en plusieurs fois) ; vide = paiement en une fois.
+     *
+     * @var Collection<int, QuoteInstallment>
+     */
+    #[ORM\OneToMany(targetEntity: QuoteInstallment::class, mappedBy: 'quote', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[ORM\OrderBy(['position' => 'ASC', 'id' => 'ASC'])]
+    #[Assert\Valid]
+    private Collection $installments;
+
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
     public function __construct()
     {
         $this->lines = new ArrayCollection();
+        $this->installments = new ArrayCollection();
         $this->createdAt = new \DateTimeImmutable();
         $this->issueDate = new \DateTimeImmutable('today');
     }
@@ -82,24 +95,98 @@ class Quote
         foreach ($this->lines as $line) {
             $copy->addLine($line->duplicate());
         }
+        foreach ($this->installments as $installment) {
+            $copy->addInstallment($installment->duplicate());
+        }
 
         return $copy;
     }
 
-    public function getTotalExclTax(): int
+    #[Assert\Callback]
+    public function validateInstallments(ExecutionContextInterface $context): void
     {
-        return array_sum($this->lines->map(static fn (QuoteLine $l) => $l->getTotalExclTax())->toArray());
+        if ($this->installments->isEmpty()) {
+            return;
+        }
+
+        $sum = array_sum($this->installments->map(static fn (QuoteInstallment $i) => (float) $i->getPercent())->toArray());
+        if (abs($sum - 100) > 0.001) {
+            $context->buildViolation(\sprintf('Le total des échéances doit faire 100 %% (actuellement %s %%).', rtrim(rtrim(number_format($sum, 2, ',', ''), '0'), ',')))
+                ->atPath('installments')
+                ->addViolation();
+        }
+    }
+
+    /** @return list<QuoteLine> Lignes facturées une fois. */
+    public function getOneOffLines(): array
+    {
+        return array_values($this->lines->filter(static fn (QuoteLine $l) => !$l->isRecurring())->toArray());
+    }
+
+    /** @return list<QuoteLine> Lignes d'abonnement (mensuel, annuel…). */
+    public function getRecurringLines(): array
+    {
+        return array_values($this->lines->filter(static fn (QuoteLine $l) => $l->isRecurring())->toArray());
     }
 
     /**
-     * TVA regroupée par taux, en centimes.
+     * Totaux des abonnements par périodicité, en centimes.
+     *
+     * @return array<string, array{recurrence: Recurrence, exclTax: int, vat: int, inclTax: int}>
+     */
+    public function getRecurringTotals(): array
+    {
+        $totals = [];
+        foreach (Recurrence::recurring() as $recurrence) {
+            $lines = array_filter($this->getRecurringLines(), static fn (QuoteLine $l) => $l->getEffectiveRecurrence() === $recurrence);
+            if ([] === $lines) {
+                continue;
+            }
+            $exclTax = array_sum(array_map(static fn (QuoteLine $l) => $l->getTotalExclTax(), $lines));
+            $vat = array_sum(array_map(static fn (QuoteLine $l) => (int) round($l->getTotalExclTax() * (float) $l->getVatRate() / 100), $lines));
+            $totals[$recurrence->value] = ['recurrence' => $recurrence, 'exclTax' => $exclTax, 'vat' => $vat, 'inclTax' => $exclTax + $vat];
+        }
+
+        return $totals;
+    }
+
+    /**
+     * Montant de chaque échéance sur le total à payer (TTC, ou HT en franchise de TVA,
+     * puisque la TVA est alors nulle). La dernière échéance absorbe l'arrondi.
+     *
+     * @return list<array{installment: QuoteInstallment, amount: int}>
+     */
+    public function getPaymentSchedule(): array
+    {
+        $total = $this->getTotalInclTax();
+        $schedule = [];
+        $allocated = 0;
+        $installments = array_values($this->installments->toArray());
+        foreach ($installments as $i => $installment) {
+            $amount = $i === \count($installments) - 1
+                ? $total - $allocated
+                : (int) round($total * (float) $installment->getPercent() / 100);
+            $allocated += $amount;
+            $schedule[] = ['installment' => $installment, 'amount' => $amount];
+        }
+
+        return $schedule;
+    }
+
+    public function getTotalExclTax(): int
+    {
+        return array_sum(array_map(static fn (QuoteLine $l) => $l->getTotalExclTax(), $this->getOneOffLines()));
+    }
+
+    /**
+     * TVA des lignes ponctuelles regroupée par taux, en centimes.
      *
      * @return array<string, array{base: int, vat: int}>
      */
     public function getVatBreakdown(): array
     {
         $breakdown = [];
-        foreach ($this->lines as $line) {
+        foreach ($this->getOneOffLines() as $line) {
             $rate = $line->getVatRate();
             $breakdown[$rate] ??= ['base' => 0, 'vat' => 0];
             $breakdown[$rate]['base'] += $line->getTotalExclTax();
@@ -243,6 +330,31 @@ class Quote
     {
         if ($this->lines->removeElement($line) && $line->getQuote() === $this) {
             $line->setQuote(null);
+        }
+
+        return $this;
+    }
+
+    /** @return Collection<int, QuoteInstallment> */
+    public function getInstallments(): Collection
+    {
+        return $this->installments;
+    }
+
+    public function addInstallment(QuoteInstallment $installment): static
+    {
+        if (!$this->installments->contains($installment)) {
+            $this->installments->add($installment);
+            $installment->setQuote($this);
+        }
+
+        return $this;
+    }
+
+    public function removeInstallment(QuoteInstallment $installment): static
+    {
+        if ($this->installments->removeElement($installment) && $installment->getQuote() === $this) {
+            $installment->setQuote(null);
         }
 
         return $this;

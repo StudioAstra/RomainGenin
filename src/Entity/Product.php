@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Enum\Recurrence;
 use App\Repository\ProductRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -39,6 +40,10 @@ class Product
     #[ORM\Column(type: Types::DECIMAL, precision: 5, scale: 2, options: ['default' => '0.00'])]
     #[Assert\Range(min: 0, max: 100)]
     private string $vatRate = '0.00';
+
+    /** Ponctuel ou abonnement (hébergement, nom de domaine…). */
+    #[ORM\Column(length: 20, enumType: Recurrence::class, options: ['default' => 'ponctuel'])]
+    private Recurrence $recurrence = Recurrence::OneOff;
 
     #[ORM\Column(options: ['default' => true])]
     private bool $active = true;
@@ -109,6 +114,18 @@ class Product
     public function setVatRate(string|float|null $vatRate): static
     {
         $this->vatRate = number_format((float) $vatRate, 2, '.', '');
+
+        return $this;
+    }
+
+    public function getRecurrence(): Recurrence
+    {
+        return $this->recurrence;
+    }
+
+    public function setRecurrence(?Recurrence $recurrence): static
+    {
+        $this->recurrence = $recurrence ?? Recurrence::OneOff;
 
         return $this;
     }
